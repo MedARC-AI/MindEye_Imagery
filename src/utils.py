@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import math
 import webdataset as wds
 
+from tqdm import tqdm
 import json
 from PIL import Image
 import requests
@@ -469,3 +470,90 @@ def load_imageryrf(subject, mode, mask=True, image_type="stimuli", average=False
 
     print(x.shape, y.shape)
     return x, y
+
+# Main data loader, 
+# vector: required parameter for the type of vector you want to load, options are: "c", "images", "z_vdvae"
+# subject: required parameter for which subjects data to load, options are: 1, 2, 5, 7
+# loader: flag to return dataloaders instead of raw data tensors
+# ae: flag to return data used for training the autoencoder
+# encoderModel: if ae flag is enabled, this is a required parameter specifying which encoding model's predictions to use for the autoencoder target
+# average: flag to determine whether the brain data is averaged across the trial repetitions
+# nest: if loader is False, changes the shape of the data structure to keep sample repetitions together
+# batch_size: only used if loader is True, determines dataloader batch size
+# num_workers: only used if loader is True, determines num_workers for dataloader
+def load_nsd(subject, average=False, nest=False, normalized=True, data_root="../dataset/"):
+    if normalized:
+        beta_file = f"{data_root}/preprocessed_data/subject{subject}/nsd_general_large.pt"
+    else:
+        beta_file = f"{data_root}/preprocessed_data/subject{subject}/nsd_general_unnormalized_large.pt"
+    x = torch.load(beta_file).requires_grad_(False).to("cpu")
+    y = torch.load(f"{data_root}/preprocessed_data/subject{subject}/images.pt").requires_grad_(False).to("cpu")
+    x_train, x_test = [], []
+    y_train, y_test = [], []
+    # Preparing dataframe to help separate the shared1000 test data
+    stim_descriptions = pd.read_csv(f'{data_root}/nsddata/experiments/nsd/nsd_stim_info_merged.csv', index_col=0)
+    subj_train = stim_descriptions[(stim_descriptions['subject{}'.format(subject)] != 0) & (stim_descriptions['shared1000'] == False)]
+    subj_test = stim_descriptions[(stim_descriptions['subject{}'.format(subject)] != 0) & (stim_descriptions['shared1000'] == True)]
+    pbar = tqdm(desc="loading samples", total=x.shape[0])
+    for i in range(subj_train.shape[0]):
+        nsdId = subj_train.iloc[i]['nsdId']
+        avx = []
+        avy = []
+        x_row = torch.zeros((3, x.shape[1]))
+        for j in range(3):
+            scanId = subj_train.iloc[i]['subject{}_rep{}'.format(subject, j)] - 1
+            if(scanId < x.shape[0]):
+                if average or nest:
+                    avx.append(x[scanId])
+                    avy.append(y[scanId])
+                else:
+                    x_train.append(x[scanId])
+                    y_train.append(y[scanId])
+                pbar.update() 
+        # Setup nested or averaged data structure if flags are passed
+        if(len(avy)>0):
+            if average:
+                avx = torch.stack(avx)
+                x_train.append(torch.mean(avx, dim=0))
+            else:
+                for j in range(len(avx)):
+                    x_row[j] = avx[j]
+                x_train.append(x_row)
+            y_train.append(avy[0])
+    # Collect test data
+    for i in range(subj_test.shape[0]):
+        nsdId = subj_test.iloc[i]['nsdId']
+        avx = []
+        avy = []
+        x_row = torch.zeros((3, x.shape[1]))
+        for j in range(3):
+            scanId = subj_test.iloc[i]['subject{}_rep{}'.format(subject, j)] - 1
+            if(scanId < x.shape[0]):
+                if average or nest:
+                    avx.append(x[scanId])
+                    avy.append(y[scanId])
+                else:
+                    x_test.append(x[scanId])
+                    y_test.append(y[scanId])
+                pbar.update() 
+        # Setup nested or averaged data structure if flags are passed
+        if(len(avy)>0):
+            if average:
+                avx = torch.stack(avx)
+                x_test.append(torch.mean(avx, dim=0))
+                
+            else:
+                for j in range(len(avx)):
+                    x_row[j] = avx[j]
+                x_test.append(x_row)
+            y_test.append(avy[0])
+    # Concatenate data into tensors
+    x_train = torch.stack(x_train).to("cpu")
+    x_test = torch.stack(x_test).to("cpu")
+    y_train = torch.stack(y_train).to("cpu")
+    y_test = torch.stack(y_test).to("cpu")
+        
+    #Flag to make compatible with existing SS architectures that expect multiple trials
+    tqdm.write("Data Shapes... x_train: {}, x_test: {}, y_train: {}, y_test: {}".format(x_train.shape, x_test.shape, y_train.shape, y_test.shape))
+    
+    return x_train, x_test, y_train, y_test
