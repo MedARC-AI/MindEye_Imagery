@@ -4,7 +4,7 @@ export CUDA_VISIBLE_DEVICES="3"
 
 for subj in 11; do
     # for gen_rep in 4 5 6 7 8 9; do
-    for model in pretrained_subj0${subj}irf_40sess_hypatia_imageryrf_all_no_blurry pretrained_subj0${subj}irf_40sess_hypatia_imageryrf_vision_no_blurry; do
+    for model in pretrained_subj${subj}irf_40sess_hypatia_imageryrf_all_no_blurry pretrained_subj${subj}irf_40sess_hypatia_imageryrf_vision_no_blurry; do
         for mode in "imagery" "vision"; do
             python recon_inference_mi.py \
                 --model_name $model \
