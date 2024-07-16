@@ -8,7 +8,7 @@ export CUDA_VISIBLE_DEVICES="3"
 
 for subj in 5 7; do
     pretrain_model_name="multisubject_subj0${subj}_hypatia_ip_adapter"
-    echo model_name=${pretrain_model_name}
+    echo pretrain_model_name=${pretrain_model_name}
     python Train.py --data_path=../dataset --cache_dir=../cache --model_name=${pretrain_model_name} --multi_subject --subj=$subj --batch_size=${BATCH_SIZE} --max_lr=6e-5 --mixup_pct=.33 --num_epochs=150 --use_prior --prior_scale=30 --clip_scale=1 --blur_scale=.5 --no-use_image_aug --n_blocks=4 --hidden_dim=1024 --num_sessions=40 --ckpt_interval=999 --ckpt_saving --wandb_log #--no-blurry_recon
 
     # singlesubject finetuning
