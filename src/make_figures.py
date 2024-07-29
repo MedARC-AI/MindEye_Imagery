@@ -7,7 +7,7 @@ import utils
 
 voxels, all_images = utils.load_nsd_mental_imagery(subject=1, mode="vision", stimtype="all", average=True, nest=False, data_root="../dataset/")
 for mode in ["vision", "imagery"]:
-    for model_name in ["final_subj01_pretrained_40sess_24bs", "final_subj01_pretrained_40sess_24bs", "pretrained_subj01_40sess_hypatia_no_blurry2", "pretrained_subj01_40sess_hypatia_imageryrf_vision_no_blurry2", "pretrained_subj01_40sess_hypatia_imageryrf_all_no_blurry2"]:
+    for model_name in ["pretrained_subj09irf_40sess_hypatia_imageryrf_imagery_no_blurry"]:
         all_enhancedrecons = torch.load(f"evals/{model_name}/{model_name}_all_enhancedrecons_{mode}.pt")
 
 
