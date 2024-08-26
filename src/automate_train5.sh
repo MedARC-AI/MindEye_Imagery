@@ -1,10 +1,10 @@
 
 jupyter nbconvert Train.ipynb --to python
 jupyter nbconvert recon_inference_mi.ipynb --to python
-export NUM_GPUS=1  # Set to equal gres=gpu:#!
+export NUM_GPUS=2  # Set to equal gres=gpu:#!
 export BATCH_SIZE=7 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
 export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
-export CUDA_VISIBLE_DEVICES="2,3"
+export CUDA_VISIBLE_DEVICES="1,2,3"
 
 for subj in 1; do
     pretrain_model_name="multisubject_subj0${subj}_hypatia_ip-adapter_sdxl_vit-h_finetune"
@@ -19,7 +19,7 @@ for subj in 1; do
         --max_lr=6e-5 \
         --mixup_pct=.33 \
         --num_epochs=150 \
-        --use_prior \
+        --no-use_prior \
         --prior_scale=30 \
         --clip_scale=1 \
         --blur_scale=.5 \
@@ -34,8 +34,8 @@ for subj in 1; do
         --pretrained_diffusion_model_path="stabilityai/stable-diffusion-xl-base-1.0" \
         --pretrained_ip_adapter_path="IP-Adapter/sdxl_models/ip-adapter_sdxl_vit-h.bin" \
         --image_encoder_path="IP-Adapter/models/image_encoder" \
-        --num_tokens=4
-        #--no-blurry_recon
+        --num_tokens=4 \
+        --no-blurry_recon
 
     # # singlesubject finetuning
     model_name="pretrained_subj0${subj}_40sess_hypatia_ip-adapter_sdxl_vit-h_finetune"
@@ -51,7 +51,7 @@ for subj in 1; do
         --max_lr=6e-5 \
         --mixup_pct=.33 \
         --num_epochs=150 \
-        --use_prior \
+        --no-use_prior \
         --prior_scale=30 \
         --clip_scale=1 \
         --blur_scale=.5 \
@@ -66,8 +66,9 @@ for subj in 1; do
         --multisubject_ckpt=../train_logs/${pretrain_model_name} \
         --pretrained_diffusion_model_path="stabilityai/stable-diffusion-xl-base-1.0" \
         --image_encoder_path="IP-Adapter/models/image_encoder" \
-        --num_tokens=4
-        #--no-blurry_recon #--resume_from_ckpt
+        --num_tokens=4 \
+        --no-blurry_recon 
+        #--resume_from_ckpt
 
     for mode in "imagery" "vision"; do
         python recon_inference_mi.py \
