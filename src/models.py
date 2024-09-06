@@ -30,7 +30,6 @@ class BrainNetwork(nn.Module):
         # Output linear layer
         self.backbone_linear = nn.Linear(h * seq_len, out_dim, bias=True) 
         self.clip_proj = self.projector(clip_size, clip_size, h=clip_size)
-        
         if self.blurry_recon:
             self.blin1 = nn.Linear(h*seq_len,4*28*28,bias=True)
             self.bdropout = nn.Dropout(.3)
@@ -227,15 +226,29 @@ class Clipper(torch.nn.Module):
         print(clip_variant, device)
         
         if clip_variant=="ViT-L/14" and hidden_state:
-            from transformers import CLIPVisionModelWithProjection
+            from transformers import CLIPVisionModelWithProjection, CLIPModel,CLIPTokenizer,CLIPProcessor
             image_encoder = CLIPVisionModelWithProjection.from_pretrained("openai/clip-vit-large-patch14").eval()
+            tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
+            processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+            model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").eval()
+            # text_encoder = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").eval()
             # image_encoder = CLIPVisionModelWithProjection.from_pretrained("openai/clip-vit-large-patch14",cache_dir="/fsx/proj-medarc/fmri/cache")
             #from transformers import CLIPVisionModelWithProjection
             #sd_cache_dir = '/fsx/proj-medarc/fmri/cache/models--shi-labs--versatile-diffusion/snapshots/2926f8e11ea526b562cd592b099fcf9c2985d0b7'
             #image_encoder = CLIPVisionModelWithProjection.from_pretrained(sd_cache_dir, subfolder='image_encoder').eval()
             image_encoder = image_encoder.to(device)
+            tokenizer =tokenizer
+            processor = processor
+            model = model.to(device)
             for param in image_encoder.parameters():
                 param.requires_grad = False # dont need to calculate gradients
+            for param in model.parameters():
+                param.requires_grad = False # dont need to calculate gradients
+            # for param in text_encoder.parameters():
+            #     param.requires_grad = False # dont need to calculate gradients
+            self.tokenizer = tokenizer
+            self.processor = processor
+            self.model = model
             self.image_encoder = image_encoder
         elif hidden_state:
             raise Exception("hidden_state embeddings only works with ViT-L/14 right now")
@@ -268,11 +281,35 @@ class Clipper(torch.nn.Module):
         self.device= device
         
         def versatile_normalize_embeddings(encoder_output):
+            # original code:
+            # ---------------------------------------------------------------
+            # outputs = self.model.vision_model(pixel_values=pixels)
+            # z = outputs.last_hidden_state
+            # z = self.model.vision_model.post_layernorm(z)
+            # z = self.model.visual_projection(z)
+            # z_pooled = z[:, 0:1]
+            # z = z / torch.norm(z_pooled, dim=-1, keepdim=True)
+            # ---------------------------------------------------------------
             embeds = encoder_output.last_hidden_state
             embeds = image_encoder.vision_model.post_layernorm(embeds)
             embeds = image_encoder.visual_projection(embeds)
             return embeds
         self.versatile_normalize_embeddings = versatile_normalize_embeddings
+
+        def versatile_normalize_text_embeddings(encoder_output):
+            # original code:
+            # ---------------------------------------------------------------
+            # outputs = self.model.text_model(input_ids=tokens)
+            # z = self.model.text_projection(outputs.last_hidden_state)
+            # z_pooled = self.model.text_projection(outputs.pooler_output)
+            # z = z / torch.norm(z_pooled.unsqueeze(1), dim=-1, keepdim=True)
+            # ---------------------------------------------------------------
+            txt_embeds = self.model.text_projectio(encoder_output.last_hidden_estate)
+            txt_pooled = self.model.text_projection(encoder_output.pooler_output)
+            txt_embeds = self.model.text_projection(txt_embeds)
+            return txt_embeds, txt_pooled
+        self.versatile_normalize_text_embeddings = versatile_normalize_text_embeddings
+
 
     def resize_image(self, image):
         # note: antialias should be False if planning to use Pinkney's Image Variation SD model
@@ -300,13 +337,33 @@ class Clipper(torch.nn.Module):
         return clip_emb
 
     def embed_text(self, text_samples):
-        clip_text = clip.tokenize(text_samples).to(self.device)
-        clip_text = self.clip.encode_text(clip_text)
+        if self.hidden_state:
+            batch_encoding = self.tokenizer(text_samples, truncation=True, max_length=77, return_length=True,
+            return_overflowing_tokens=False, padding="max_length", return_tensors="pt").to(self.device)
+            tokens = batch_encoding["input_ids"].to(self.device)
+            clip_emb = self.model.text_model(input_ids=tokens)
+            clip_emb, clip_pooled = self.versatile_normalize_text_embeddings(clip_emb)  
+        else:          
+            clip_text = clip.tokenize(text_samples).to(self.device)
+            clip_text = self.clip.encode_text(clip_text)
         if self.clamp_embs:
             clip_text = torch.clamp(clip_text, -1.5, 1.5)
         if self.norm_embs:
-            clip_text = nn.functional.normalize(clip_text, dim=-1)
+            if self.hidden_state:        
+                # normalize all tokens by cls token's norm
+                clip_text = clip_emb / torch.norm(clip_pooled.unsqueeze(1), dim=-1).reshape(-1, 1, 1)
+            else:
+                clip_text = nn.functional.normalize(clip_text, dim=-1)
         return clip_text
+
+    # def org_embed_text(self, text_samples):
+    #     clip_text = clip.tokenize(text_samples).to(self.device)
+    #     clip_text = self.clip.encode_text(clip_text)
+    #     if self.clamp_embs:
+    #         clip_text = torch.clamp(clip_text, -1.5, 1.5)
+    #     if self.norm_embs:
+    #         clip_text = nn.functional.normalize(clip_text, dim=-1)
+    #     return clip_text
 
     def embed_curated_annotations(self, annots):
         for i,b in enumerate(annots):
@@ -496,6 +553,148 @@ class PriorNetwork(nn.Module):
         # num_image_embeds = 1,
         # num_brain_embeds = 1,
         num_tokens = 257,
+        num_input_tokens = 257,
+        causal = True,
+        learned_query_mode = 'none',
+        **kwargs
+    ):
+        super().__init__()
+        self.dim = dim
+        self.num_time_embeds = num_time_embeds
+        self.continuous_embedded_time = not exists(num_timesteps)
+        self.learned_query_mode = learned_query_mode
+
+        self.to_time_embeds = nn.Sequential(
+            nn.Embedding(num_timesteps, dim * num_time_embeds) if exists(num_timesteps) else nn.Sequential(SinusoidalPosEmb(dim), MLP(dim, dim * num_time_embeds)), # also offer a continuous version of timestep embeddings, with a 2 layer MLP
+            Rearrange('b (n d) -> b n d', n = num_time_embeds)
+        )
+
+        if self.learned_query_mode == 'token':
+            self.learned_query = nn.Parameter(torch.randn(num_tokens, dim))
+        if self.learned_query_mode == 'pos_emb':
+            scale = dim ** -0.5
+            self.learned_query = nn.Parameter(torch.randn(num_tokens, dim) * scale)
+        if self.learned_query_mode == 'all_pos_emb':
+            scale = dim ** -0.5
+            self.learned_query = nn.Parameter(torch.randn(num_tokens*2+1, dim) * scale)
+        self.causal_transformer = FlaggedCausalTransformer(dim = dim, causal=causal, **kwargs)
+
+        self.null_brain_embeds = nn.Parameter(torch.randn(num_input_tokens, dim))
+        self.null_image_embed = nn.Parameter(torch.randn(num_tokens, dim))
+
+        self.num_tokens = num_tokens
+        self.self_cond = False
+
+    def forward_with_cond_scale(
+        self,
+        *args,
+        cond_scale = 1.,
+        **kwargs
+    ):
+        logits = self.forward(*args, **kwargs)
+
+        if cond_scale == 1:
+            return logits
+
+        null_logits = self.forward(*args, brain_cond_drop_prob = 1., image_cond_drop_prob = 1, **kwargs)
+        return null_logits + (logits - null_logits) * cond_scale
+
+    def forward(
+        self,
+        image_embed,
+        diffusion_timesteps,
+        *,
+        self_cond=None,
+        brain_embed=None,
+        text_embed=None,
+        brain_cond_drop_prob = 0.,
+        text_cond_drop_prob = None,
+        image_cond_drop_prob = 0.
+    ):
+        if text_embed is not None:
+            brain_embed = text_embed
+        if text_cond_drop_prob is not None:
+            brain_cond_drop_prob = text_cond_drop_prob
+        # WE MAY WANT THESE
+        # image_embed = image_embed.view(len(image_embed),-1,768)
+        # brain_embed = brain_embed.view(len(brain_embed),-1,768)
+        
+        # text_embed = text_embed.view(len(text_embed),-1,768)
+        # print(*image_embed.shape)
+        # print(*image_embed.shape, image_embed.device, image_embed.dtype)
+        
+        batch, _, dim, device, dtype = *image_embed.shape, image_embed.device, image_embed.dtype
+        # num_time_embeds, num_image_embeds, num_brain_embeds = self.num_time_embeds, self.num_image_embeds, self.num_brain_embeds
+        # classifier free guidance masks
+        brain_keep_mask = prob_mask_like((batch,), 1 - brain_cond_drop_prob, device = device)
+        brain_keep_mask = rearrange(brain_keep_mask, 'b -> b 1 1')
+        image_keep_mask = prob_mask_like((batch,), 1 - image_cond_drop_prob, device = device)
+        image_keep_mask = rearrange(image_keep_mask, 'b -> b 1 1')
+
+        # mask out brain embeddings with null brain embeddings
+
+        # import pdb; pdb.set_trace()
+        null_brain_embeds = self.null_brain_embeds.to(brain_embed.dtype)
+        brain_embed = torch.where(
+            brain_keep_mask,
+            brain_embed,
+            null_brain_embeds[None]
+        )
+
+        # mask out image embeddings with null image embeddings
+        null_image_embed = self.null_image_embed.to(image_embed.dtype)
+        print(f"image_keep_mask.shape {image_keep_mask.shape}, image_embed.shape {image_embed.shape}, null_image_embed.shape {null_image_embed.shape}")
+        image_embed = torch.where(
+            image_keep_mask,
+            image_embed,
+            null_image_embed[None]
+        )
+
+        # whether brain embedding is used for conditioning depends on whether brain encodings are available for attention (for classifier free guidance, even though it seems from the paper it was not used in the prior ddpm, as the objective is different)
+        # but let's just do it right
+        if self.continuous_embedded_time:
+            # if continuous cast to flat, else keep int for indexing embeddings
+            diffusion_timesteps = diffusion_timesteps.type(dtype)
+        time_embed = self.to_time_embeds(diffusion_timesteps)
+
+        if self.learned_query_mode == 'token':
+            learned_queries = repeat(self.learned_query, 'n d -> b n d', b = batch)
+        elif self.learned_query_mode == 'pos_emb':
+            pos_embs = repeat(self.learned_query, 'n d -> b n d', b = batch)
+            image_embed = image_embed + pos_embs
+            learned_queries = torch.empty((batch, 0, dim), device=brain_embed.device)
+        elif self.learned_query_mode == 'all_pos_emb':
+            pos_embs = repeat(self.learned_query, 'n d -> b n d', b = batch)
+            learned_queries = torch.empty((batch, 0, dim), device=brain_embed.device)
+        else:
+            learned_queries = torch.empty((batch, 0, dim), device=brain_embed.device)
+        
+        tokens = torch.cat((
+            brain_embed,  # 257
+            time_embed,  # 1
+            image_embed,  # 257
+            learned_queries  # 257
+        ), dim = -2)
+        if self.learned_query_mode == 'all_pos_emb':
+            tokens = tokens + pos_embs
+
+        # attend
+        tokens = self.causal_transformer(tokens)
+
+        # get learned query, which should predict the image embedding (per DDPM timestep)
+        pred_image_embed = tokens[..., -self.num_tokens:, :]
+
+        return pred_image_embed
+    
+class PriorNetwork_txt(nn.Module):
+    def __init__(
+        self,
+        dim,
+        num_timesteps = None,
+        num_time_embeds = 1,
+        # num_image_embeds = 1,
+        # num_brain_embeds = 1,
+        num_tokens = 77,
         causal = True,
         learned_query_mode = 'none',
         **kwargs
@@ -562,10 +761,13 @@ class PriorNetwork(nn.Module):
         # brain_embed = brain_embed.view(len(brain_embed),-1,768)
         
         # text_embed = text_embed.view(len(text_embed),-1,768)
-        # print(*image_embed.shape)
+        # print(*image_embed.shape)  
+        # for image : [257,768]   for txt : [1,768]
         # print(*image_embed.shape, image_embed.device, image_embed.dtype)
-        
-        batch, _, dim, device, dtype = *image_embed.shape, image_embed.device, image_embed.dtype
+        # print("image_embed shape:", image_embed.shape)
+
+        batch = text_embed.shape[0]
+        _, _, dim, device, dtype = *image_embed.shape, image_embed.device, image_embed.dtype
         # num_time_embeds, num_image_embeds, num_brain_embeds = self.num_time_embeds, self.num_image_embeds, self.num_brain_embeds
         
         # classifier free guidance masks
@@ -613,10 +815,10 @@ class PriorNetwork(nn.Module):
             learned_queries = torch.empty((batch, 0, dim), device=brain_embed.device)
         
         tokens = torch.cat((
-            brain_embed,  # 257
+            brain_embed,  # 77
             time_embed,  # 1
-            image_embed,  # 257
-            learned_queries  # 257
+            image_embed,  # 77
+            learned_queries  # 77
         ), dim = -2)
         if self.learned_query_mode == 'all_pos_emb':
             tokens = tokens + pos_embs
@@ -625,10 +827,10 @@ class PriorNetwork(nn.Module):
         tokens = self.causal_transformer(tokens)
 
         # get learned query, which should predict the image embedding (per DDPM timestep)
-        pred_image_embed = tokens[..., -self.num_tokens:, :]
+        pred_text_embed = tokens[..., -self.num_tokens:, :]
 
-        return pred_image_embed
-
+        return pred_text_embed
+    
 class FlaggedCausalTransformer(nn.Module):
     def __init__(
         self,
