@@ -316,8 +316,10 @@ def versatile_diffusion_recon(brain_clip_embeddings,
         
     input_embedding = brain_clip_embeddings
     if text_token is not None:
+        prompt_embeds = text_token
         # prompt_embeds = text_token.repeat(recons_per_sample, 1, 1)
-        prompt_embeds = text_token.repeat(len(input_embedding), 77, 1)
+        # for samp in range(len(prompt_embeds)):
+        #     prompt_embeds[samp] = prompt_embeds[samp]/(prompt_embeds[samp,0].norm(dim=-1).reshape(-1, 1, 1) + 1e-6)
     else:
         prompt_embeds = torch.zeros(len(input_embedding),77,768)
     
@@ -332,8 +334,8 @@ def versatile_diffusion_recon(brain_clip_embeddings,
         prompt_embeds = torch.cat([torch.zeros_like(prompt_embeds), prompt_embeds]).to(device).to(unet.dtype)
     
     # dual_prompt_embeddings
-    print(prompt_embeds.shape)
-    print(input_embedding.shape)
+    # print(prompt_embeds.shape)
+    # print(input_embedding.shape)
     input_embedding = torch.cat([prompt_embeds, input_embedding], dim=1)
     # 4. Prepare timesteps
     noise_scheduler.set_timesteps(num_inference_steps=num_inference_steps, device=device)
