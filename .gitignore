@@ -1,6 +1,8 @@
 wandb/
 train_logs/
 slurms/
+figs/
+src/generative_models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -170,3 +172,4 @@ src/evals/
 src/tables/
 *.hdf5
 *.pt
+*.png
