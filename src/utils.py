@@ -206,7 +206,7 @@ def mixco_nce(preds, targs, temp=0.1, perm=None, betas=None, select=None, distri
 def count_params(model):
     total = sum(p.numel() for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print('param counts:\n{:,} total\n{:,} trainable'.format(total, trainable))
+    print(f'param counts:\n{total:,} total\n{trainable:,} trainable')
     return trainable
     
 def check_loss(loss):
@@ -603,7 +603,7 @@ def condition_average_old(x, y, cond, nest=False):
 #average: whether to average across trials, will produce x that is (stimuli, 1, voxels)
 #nest: whether to nest the data according to stimuli, will produce x that is (stimuli, trials, voxels)
 #data_root: path to where the dataset is saved.
-def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, data_root="../dataset/"):
+def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, data_root="../dataset/"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
     img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -630,7 +630,15 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                             np.logical_or(exps=='imgB_1', exps=='imgB_2')),
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
     # Load normalized betas
-    x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
+    if snr == -1.0
+        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
+    else:
+        if not os.path.exists(f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
+            create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
+            create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
+        x = torch.load(f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
+        snr_mask = calculate_snr_mask(subject, threshold, data_path=data_path)
+        x = x[:,snr_mask]
     # Find the trial indices conditioned on the type of trials we want to load
     cond_im_idx = {n: [image_map[c] for c in cues[idx]] for n,idx in cond_idx.items()}
     conditionals = cond_im_idx[mode+stimtype]
@@ -765,7 +773,7 @@ def load_imageryrf(subject, mode, mask=True, stimtype="object", average=False, n
         return x, y
     
     
-def read_betas(subject, session_index, trial_index=[], data_type='betas_fithrf_GLMdenoise_RR', data_format='fsaverage', mask=None):
+def read_betas(subject, session_index, trial_index=[], data_type='betas_fithrf_GLMdenoise_RR', data_format='fsaverage', mask=None, data_path="../dataset"):
         """read_betas read betas from MRI files
 
         Parameters
@@ -788,12 +796,9 @@ def read_betas(subject, session_index, trial_index=[], data_type='betas_fithrf_G
         numpy.ndarray, 2D (fsaverage) or 4D (other data formats)
             the requested per-trial beta values
         """
-        current_directory = os.getcwd()
-        current_directory = current_directory.split("/")[:-1]
-        current_directory = "/".join(current_directory)
-        
-        data_folder = current_directory + '/dataset/nsddata_betas/ppdata/{}/{}/{}'.format(subject, data_format, data_type)
 
+        data_folder = f'{data_path}/nsddata_betas/ppdata/{subject}/{data_format}/{data_type}'
+        
         si_str = str(session_index).zfill(2)
 
         out_data = nb.load(
@@ -806,7 +811,7 @@ def read_betas(subject, session_index, trial_index=[], data_type='betas_fithrf_G
 
 
 def create_whole_region_unnormalized(subject: int = 1, include_heldout: bool = True, 
-                                     mask_nsd_general: bool = False) -> None:
+                                     mask_nsd_general: bool = False, data_path="../dataset") -> None:
     """Creates and saves an unnormalized whole region tensor for a given subject.
 
     This function loads, processes, and saves whole region neural data for a given subject. 
@@ -816,27 +821,26 @@ def create_whole_region_unnormalized(subject: int = 1, include_heldout: bool = T
         subject (int, optional): The subject number (1-8). Defaults to 1.
         include_heldout (bool, optional): Whether to include held-out data. Defaults to True.
         mask_nsd_general (bool, optional): Whether to apply the NSD general mask. Defaults to False.
+        data_path (str, optional): The path to the data directory. Defaults to "../dataset".
 
     Returns:
         None: The function saves the processed tensor to a file and does not return anything.
     """
     
-    # Set the current working directory and ensure the output directory exists.
-    current_directory = os.getcwd()
-    os.makedirs(f"data/preprocessed_data/subject{subject:02d}/", exist_ok=True)
+    os.makedirs(f"{data_path}/preprocessed_data/subject{subject}/", exist_ok=True)
 
     # Determine the output file path and the number of scans based on function parameters.
     if include_heldout and mask_nsd_general:
-        file_path = f"{current_directory}/data/preprocessed_data/subject{subject:02d}/nsd_general_unnormalized_include_heldout.pt"
+        file_path = f"{data_path}/preprocessed_data/subject{subject}/nsd_general_unnormalized_include_heldout.pt"
         num_scans = {1: 40, 2: 40, 3: 32, 4: 30, 5: 40, 6: 32, 7: 40, 8: 30}
     elif include_heldout and not mask_nsd_general:
-        file_path = f"{current_directory}/data/preprocessed_data/subject{subject:02d}/whole_brain_unnormalized_include_heldout.pt"
+        file_path = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_unnormalized_include_heldout.pt"
         num_scans = {1: 40, 2: 40, 3: 32, 4: 30, 5: 40, 6: 32, 7: 40, 8: 30}
     elif not include_heldout and not mask_nsd_general:
-        file_path = f"{current_directory}/data/preprocessed_data/subject{subject:02d}/whole_brain_unnormalized.pt"
+        file_path = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_unnormalized.pt"
         num_scans = {1: 40, 2: 40, 3: 32, 4: 30, 5: 40, 6: 32, 7: 40, 8: 30}
     else:
-        file_path = f"{current_directory}/data/preprocessed_data/subject{subject:02d}/nsd_general_unnormalized.pt"
+        file_path = f"{data_path}/preprocessed_data/subject{subject}/nsd_general_unnormalized.pt"
         num_scans = {1: 37, 2: 37, 3: 32, 4: 30, 5: 37, 6: 32, 7: 37, 8: 30}
     
     # If the file already exists, exit the function
@@ -845,15 +849,11 @@ def create_whole_region_unnormalized(subject: int = 1, include_heldout: bool = T
 
     # Apply the NSD general mask if required.
     if mask_nsd_general:
-        nsd_general = nb.load("/".join(current_directory.split("/")[:-1]) + 
-                              "/dataset/nsddata/ppdata/subj0" + str(subject) + 
-                              "/func1pt8mm/roi/nsdgeneral.nii.gz").get_fdata()
+        nsd_general = nb.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/nsdgeneral.nii.gz").get_fdata()
         nsd_general = np.nan_to_num(nsd_general)
         mask = nsd_general == 1.0
     else:
-        brainmask_inflated = nb.load("/".join(current_directory.split("/")[:-1]) + 
-                                     "/dataset/nsddata/ppdata/subj0" + str(subject) + 
-                                     "/func1pt8mm/roi/brainmask_inflated_1.0.nii").get_fdata()
+        brainmask_inflated = nb.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/brainmask_inflated_1.0.nii").get_fdata()
         brainmask_inflated = np.nan_to_num(brainmask_inflated)
         mask = brainmask_inflated == 1.0
         
@@ -871,7 +871,8 @@ def create_whole_region_unnormalized(subject: int = 1, include_heldout: bool = T
                                 session_index=i, 
                                 trial_index=[], # Empty list as index means get all 750 scans for this session (trial --> scan)
                                 data_type="betas_fithrf_GLMdenoise_RR",
-                                data_format='func1pt8mm')
+                                data_format='func1pt8mm',
+                                data_path=data_path)
             
         # Reshape the beta trails to be flattened. 
         beta = beta.reshape((mask.shape[0], beta.shape[3]))
@@ -891,56 +892,67 @@ def create_whole_region_unnormalized(subject: int = 1, include_heldout: bool = T
     torch.nan_to_num(whole_region)
     torch.save(whole_region, file_path)
 
+def zscore(x, mean=None, stddev=None, return_stats=False):
+    if mean is not None:
+        m = mean
+    else:
+        m = torch.mean(x, axis=0, keepdims=True)
+    if stddev is not None:
+        s = stddev
+    else:
+        s = torch.std(x, axis=0, keepdims=True)
+    if return_stats:
+        return (x - m)/(s+1e-6), m, s
+    else:
+        return (x - m)/(s+1e-6)
     
-def create_whole_region_normalized(subject = 1, include_heldout=False, mask_nsd_general=False):
+def create_whole_region_normalized(subject = 1, include_heldout=False, mask_nsd_general=False, data_path="../dataset/"):
         
-    current_directory = os.getcwd()
-    
     if include_heldout and mask_nsd_general:
-        file = current_directory + f"/data/preprocessed_data/subject{subject:02d}/nsd_general_include_heldout.pt"
+        file = f"{data_path}/preprocessed_data/subject{subject}/nsd_general_include_heldout.pt"
         
         # File has already been created
         if os.path.exists(file): return
         
-        whole_region = torch.load(current_directory + f"/data/preprocessed_data/subject{subject:02d}/nsd_general_unnormalized_include_heldout.pt")
+        whole_region = torch.load(f"{data_path}/preprocessed_data/subject{subject}/nsd_general_unnormalized_include_heldout.pt")
         numScans = {1: 40, 2: 40, 3:32, 4: 30, 5:40, 6:32, 7:40, 8:30}
         
     elif include_heldout and not mask_nsd_general:
-        file = current_directory + f"/data/preprocessed_data/subject{subject:02d}/whole_brain_include_heldout.pt"
+        file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_include_heldout.pt"
         
         # File has already been created
         if os.path.exists(file): return
         
-        whole_region = torch.load(current_directory + f"/data/preprocessed_data/subject{subject:02d}/whole_brain_unnormalized_include_heldout.pt")
+        whole_region = torch.load(f"{data_path}/preprocessed_data/subject{subject}/whole_brain_unnormalized_include_heldout.pt")
         numScans = {1: 40, 2: 40, 3:32, 4: 30, 5:40, 6:32, 7:40, 8:30}
         
     elif not include_heldout and not mask_nsd_general:
-        file = current_directory + f"/data/preprocessed_data/subject{subject:02d}/whole_brain.pt"
+        file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain.pt"
         
         # File has already been created
         if os.path.exists(file): return
         
-        whole_region = torch.load(current_directory + f"/data/preprocessed_data/subject{subject:02d}/whole_brain_unnormalized.pt")
+        whole_region = torch.load(f"{data_path}/preprocessed_data/subject{subject}/whole_brain_unnormalized.pt")
         numScans = {1: 40, 2: 40, 3:32, 4: 30, 5:40, 6:32, 7:40, 8:30}
         
     else:
-        file = current_directory + f"/data/preprocessed_data/subject{subject:02d}/nsd_general.pt"
+        file = f"{data_path}/preprocessed_data/subject{subject}/nsd_general.pt"
         
         # File has already been created
         if os.path.exists(file): return
         
-        whole_region = torch.load(current_directory + f"/data/preprocessed_data/subject{subject:02d}/nsd_general_unnormalized.pt")
+        whole_region = torch.load(f"{data_path}/preprocessed_data/subject{subjec}/nsd_general_unnormalized.pt")
         numScans = {1: 37, 2: 37, 3:32, 4: 30, 5:37, 6:32, 7:37, 8:30}
     
     whole_region_norm = torch.zeros_like(whole_region)
     
-    stim_descriptions = pd.read_csv("/".join(current_directory.split("/")[:-1]) + '/dataset/nsddata/experiments/nsd/nsd_stim_info_merged.csv', index_col=0)
-    subj_train = stim_descriptions[(stim_descriptions['subject{}'.format(subject)] != 0) & (stim_descriptions['shared1000'] == False)]
+    stim_descriptions = pd.read_csv(f'{data_path}/nsddata/experiments/nsd/nsd_stim_info_merged.csv', index_col=0)
+    subj_train = stim_descriptions[(stim_descriptions[f'subject{subject}'] != 0) & (stim_descriptions['shared1000'] == False)]
     train_ids = []
     
     for i in range(subj_train.shape[0]):
         for j in range(3):
-            scanID = subj_train.iloc[i]['subject{}_rep{}'.format(subject, j)] - 1
+            scanID = subj_train.iloc[i][f'subject{subject}_rep{j}'] - 1
             if scanID < numScans[subject]*750:
                 train_ids.append(scanID)
     normalizing_data = whole_region[torch.tensor(train_ids)]
@@ -955,17 +967,78 @@ def create_whole_region_normalized(subject = 1, include_heldout=False, mask_nsd_
     # Save the tensor of normalized data
     torch.save(whole_region_norm, file)
     
-def calculate_snr_preaverage(betas):
-        averaged_betas = torch.mean(betas, dim=1)
-        print(averaged_betas.shape)
-        signal = torch.var(averaged_betas, dim=0)
-        trial_variance = torch.var(betas, dim=1)
-        print(trial_variance.shape)
-        noise = torch.mean(trial_variance, dim=0)
-        snr = signal / noise
-        print("signal: ", signal.shape, signal)
-        print("noise: ", noise.shape, noise)
-        return snr, signal, noise
+def create_whole_region_imagery_unnormalized(subject = 1, mask=True, GLMdenoise=True, data_path="../dataset/"):
+    
+    os.makedirs(f"{data_path}/preprocessed_data/subject{subject}/", exist_ok=True)
+    if GLMdenoise:
+        beta_file = f"{data_path}/nsddata_betas/ppdata/subj0{subject}/func1pt8mm/nsdimagerybetas_fithrf_GLMdenoise_RR/betas_nsdimagery.nii.gz"
+    else:
+        file += "_b2"
+        beta_file = f"{data_path}/nsddata_betas/ppdata/subj0{subject}/func1pt8mm/nsdimagerybetas_fithrf/betas_nsdimagery.nii.gz"
+
+    imagery_betas = nb.load(beta_file).get_fdata()
+
+    imagery_betas = imagery_betas.transpose((3,0,1,2))
+    if mask:
+        file = f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_unnormalized.pt"
+        nsd_general = nb.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/nsdgeneral.nii.gz").get_fdata()
+        nsd_general = np.where(nsd_general==1.0, True, False)
+        nsd_general_mask = np.nan_to_num(nsd_general)
+        nsd_mask = np.array(nsd_general_mask.flatten(), dtype=bool)
+        whole_region = torch.from_numpy(imagery_betas.reshape((len(imagery_betas), -1))[:,nsd_general.flatten()].astype(np.float32))
+    else:
+        file = f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_unnormalized_whole_brain.pt"
+        whole_brain = nb.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/brainmask_inflated_1.0.nii").get_fdata()
+        whole_brain = np.where(whole_brain==1.0, True, False)
+        whole_brain_mask = np.nan_to_num(whole_brain)
+        whole_brain_mask = np.array(whole_brain_mask.flatten(), dtype=bool)
+        whole_region = torch.from_numpy(imagery_betas.reshape((len(imagery_betas), -1))[:,whole_brain_mask.flatten()].astype(np.float32))
+    
+    torch.save(whole_region, file)
+    return whole_region
+
+def create_whole_region_imagery_normalized(subject = 1, mask=True, GLMdenoise=True, data_path="../dataset/"):
+    img_stim_file = f"{data_path}/nsddata_stimuli/stimuli/nsd/nsdimagery_stimuli.pkl3"
+    ex_file = open(img_stim_file, 'rb')
+    imagery_dict = pickle.load(ex_file)
+    ex_file.close()
+    exps = imagery_dict['exps']
+    cues = imagery_dict['cues']
+    meta_cond_idx = {
+        'visA': np.arange(len(exps))[exps=='visA'],
+        'visB': np.arange(len(exps))[exps=='visB'],
+        'visC': np.arange(len(exps))[exps=='visC'],
+        'imgA_1': np.arange(len(exps))[exps=='imgA_1'],
+        'imgA_2': np.arange(len(exps))[exps=='imgA_2'],
+        'imgB_1': np.arange(len(exps))[exps=='imgB_1'],
+        'imgB_2': np.arange(len(exps))[exps=='imgB_2'],
+        'imgC_1': np.arange(len(exps))[exps=='imgC_1'],
+        'imgC_2': np.arange(len(exps))[exps=='imgC_2'],
+        'attA': np.arange(len(exps))[exps=='attA'],
+        'attB': np.arange(len(exps))[exps=='attB'],
+        'attC': np.arange(len(exps))[exps=='attC'],
+    }
+    unnormalized_file = f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_unnormalized"
+    output_file = f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery"
+    if not GLMdenoise:
+        unnormalized_file += "_b2"
+        output_file += "_b2"
+    if not mask:
+        unnormalized_file += "_whole_brain"
+        output_file += "_whole_brain"
+    whole_region = torch.load(unnormalized_file + ".pt")
+    whole_region = whole_region / 300.
+    whole_region_norm = torch.zeros_like(whole_region)
+            
+    # Normalize the data using Z scoring method for each voxel
+    for c,idx in meta_cond_idx.items():
+        whole_region_norm[idx] = zscore(whole_region[idx])
+
+    # Save the tensor of normalized data
+    torch.save(whole_region_norm, output_file + ".pt")
+    # Delete NSD unnormalized file after the normalized data is created. 
+    if(os.path.exists(unnormalized_file + ".pt")):
+        os.remove(unnormalized_file + ".pt")
     
 def calculate_snr(betas):
     averaged_betas = torch.mean(betas, dim=1)
@@ -976,82 +1049,73 @@ def calculate_snr(betas):
     snr = torch.nan_to_num(snr)
     return snr, signal, noise
 
-def create_snr_betas(subject, data_path, threshold = -1.0):
+def create_snr_betas(subject, threshold = -1.0, data_path="../dataset/"):
     
-    create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False)
-    create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False)
+    create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
+    create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
     
     if threshold != -1.0:
-        current_directory = os.getcwd()
-        beta_file = f"{current_directory}/data/preprocessed_data/subject{subject:02d}/whole_brain_include_heldout.pt"
+        beta_file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_include_heldout.pt"
         x = torch.load(beta_file).requires_grad_(False).to("cpu")
-        
-        # stim_descriptions = pd.read_csv("/".join(current_directory.split("/")[:-1]) + "/dataset/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0)
-        # subj_train = stim_descriptions[(stim_descriptions['subject{}'.format(subject)] != 0) & (stim_descriptions['shared1000'] == False)]
-        # subj_test = stim_descriptions[(stim_descriptions['subject{}'.format(subject)] != 0) & (stim_descriptions['shared1000'] == True)]
-        # test_trials = []
-        # test_sessions = []
-        # x_train = torch.zeros((9000, 3, x.shape[1])).to("cpu")
-        # pbar = tqdm(desc="loading samples", total=x.shape[0])
-
-        # # Collect the non-test data for the training set
-        # for i in range(subj_train.shape[0]):
-        #     for j in range(3):
-        #         scanId = subj_train.iloc[i]['subject{}_rep{}'.format(subject, j)] - 1
-        #         if(scanId < x.shape[0]):
-        #             x_train[i, j, :] = x[scanId]
-        #             pbar.update()  
-        
-        # Load stimulus descriptions
-        stim_descriptions = pd.read_csv("/".join(current_directory.split("/")[:-1]) + "/dataset/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0)
-
-        # Filter training and testing data
-        subj_train = stim_descriptions[
-            (stim_descriptions[f'subject{subject}'] != 0) & (stim_descriptions['shared1000'] == False)
-        ]
-        subj_test = stim_descriptions[
-            (stim_descriptions[f'subject{subject}'] != 0) & (stim_descriptions['shared1000'] == True)
-        ]
-
-        # Prepare the scan IDs
-        rep_columns = [f'subject{subject}_rep{j}' for j in range(3)]
-        scanIds = subj_train[rep_columns].values - 1  # Convert to zero-based indices
-
-        # Handle missing values and invalid indices
-        scanIds = np.where(np.isnan(scanIds), -1, scanIds).astype(int)
-        valid_mask = (scanIds >= 0) & (scanIds < x.shape[0])
-
-        # Flatten arrays for advanced indexing
-        flat_scanIds = scanIds.flatten()
-        flat_valid_mask = valid_mask.flatten()
-
-        # Indices of valid scan IDs
-        valid_indices = np.where(flat_valid_mask)[0]
-        valid_scanIds = flat_scanIds[valid_indices]
-
-        # Map valid_indices back to (i, j) indices
-        i_indices = valid_indices // 3
-        j_indices = valid_indices % 3
-
-        # Retrieve corresponding x values
-        x_values = x[valid_scanIds]
-
-        # Initialize x_train tensor
-        x_train = torch.zeros((subj_train.shape[0], 3, x.shape[1]), dtype=x.dtype)
-
-        # Assign x_values to x_train at the correct positions
-        x_train[i_indices, j_indices, :] = x_values
-                             
-        snr, signal, noise = calculate_snr(x_train)
-        condition = snr > threshold
-        snr_tensor = torch.where(condition, x, torch.tensor(0.0))
-        snr_tensor_no_zeros = (snr_tensor != 0.0).any(dim=0)
-
+        snr_mask = calculate_snr_mask(subject, threshold, betas=x, data_path=data_path)
         # Filter out the zero columns
-        betas = snr_tensor[:, snr_tensor_no_zeros]
+        betas = x[:, snr_mask]
         
     else:      
         f = h5py.File(f'{data_path}/betas_all_subj{s:02d}_fp32_renorm.hdf5', 'r')
         betas = f['betas'][:]
         
     return betas
+
+def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
+    if betas is None:
+        beta_file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_include_heldout.pt"
+        x = torch.load(beta_file).requires_grad_(False).to("cpu")
+    else:
+        x = betas
+    # Load stimulus descriptions
+    stim_descriptions = pd.read_csv(f"{data_path}/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0)
+
+    # Filter training and testing data
+    subj_train = stim_descriptions[
+        (stim_descriptions[f'subject{subject}'] != 0) & (stim_descriptions['shared1000'] == False)
+    ]
+    subj_test = stim_descriptions[
+        (stim_descriptions[f'subject{subject}'] != 0) & (stim_descriptions['shared1000'] == True)
+    ]
+
+    # Prepare the scan IDs
+    rep_columns = [f'subject{subject}_rep{j}' for j in range(3)]
+    scanIds = subj_train[rep_columns].values - 1  # Convert to zero-based indices
+
+    # Handle missing values and invalid indices
+    scanIds = np.where(np.isnan(scanIds), -1, scanIds).astype(int)
+    valid_mask = (scanIds >= 0) & (scanIds < x.shape[0])
+
+    # Flatten arrays for advanced indexing
+    flat_scanIds = scanIds.flatten()
+    flat_valid_mask = valid_mask.flatten()
+
+    # Indices of valid scan IDs
+    valid_indices = np.where(flat_valid_mask)[0]
+    valid_scanIds = flat_scanIds[valid_indices]
+
+    # Map valid_indices back to (i, j) indices
+    i_indices = valid_indices // 3
+    j_indices = valid_indices % 3
+
+    # Retrieve corresponding x values
+    x_values = x[valid_scanIds]
+
+    # Initialize x_train tensor
+    x_train = torch.zeros((subj_train.shape[0], 3, x.shape[1]), dtype=x.dtype)
+
+    # Assign x_values to x_train at the correct positions
+    x_train[i_indices, j_indices, :] = x_values
+                            
+    snr, signal, noise = calculate_snr(x_train)
+    condition = snr > threshold
+    snr_tensor = torch.where(condition, x, torch.tensor(0.0))
+    snr_mask = (snr_tensor != 0.0).any(dim=0)
+
+    return snr_mask
