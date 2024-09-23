@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[12]:
 
 
 import os
@@ -63,14 +63,14 @@ print("device:",device)
 # if running this interactively, can specify jupyter_args here for argparser to use
 if utils.is_interactive():
     # model_name = "final_subj01_pretrained_40sess_24bs"
-    model_name = "pretrained_subj01_40sess_hypatia_no_blurry2"
+    model_name = "pretrained_subj01_40sess_hypatia_vd2_sessions40"
     print("model_name:", model_name)
 
     # other variables can be specified in the following string:
-    jupyter_args = f"--data_path=../dataset \
-                    --cache_dir=../cache \
+    jupyter_args = f"--data_path=/weka/proj-medarc/shared/umn-imagery \
+                    --cache_dir=/weka/proj-medarc/shared/cache \
                     --model_name={model_name} --subj=1 \
-                    --hidden_dim=1024 --n_blocks=4 --mode imagery --no-blurry_recon"
+                    --hidden_dim=1024 --n_blocks=4 --mode vision --no-blurry_recon"
     print(jupyter_args)
     jupyter_args = jupyter_args.split()
     
@@ -118,9 +118,6 @@ parser.add_argument(
 parser.add_argument(
     "--mode",type=str,default="vision",
 )
-parser.add_argument(
-    "--rep",type=int,default=1,
-)
 if utils.is_interactive():
     args = parser.parse_args(jupyter_args)
 else:
@@ -129,12 +126,9 @@ else:
 # create global variables without the args prefix
 for attribute_name in vars(args).keys():
     globals()[attribute_name] = getattr(args, attribute_name)
-
-
-if seed > 0 and rep == 1:
-    # seed all random functions, but only if doing 1 rep
-    utils.seed_everything(seed)
-
+    
+# seed all random functions
+utils.seed_everything(seed)
 
 # make output directory
 os.makedirs("evals",exist_ok=True)
@@ -145,15 +139,15 @@ os.makedirs(f"evals/{model_name}",exist_ok=True)
 
 
 if mode == "synthetic":
-    voxels, all_images = utils.load_nsd_synthetic(subject=subj, average=False, nest=True)
+    voxels, all_images = utils.load_nsd_synthetic(subject=subj, average=False, nest=True, data_root=data_path)
 elif subj > 8:
-    _, _, voxels, all_images = utils.load_imageryrf(subject=subj-8, mode=mode, stimtype="object", average=False, nest=True, split=True)
+    _, _, voxels, all_images = utils.load_imageryrf(subject=subj-8, mode=mode, stimtype="object", average=False, nest=True, split=True, data_root=data_path)
 else:
-    voxels, all_images = utils.load_nsd_mental_imagery(subject=subj, mode=mode, stimtype="all", average=False, nest=True)
+    voxels, all_images = utils.load_nsd_mental_imagery(subject=subj, mode=mode, stimtype="all", average=False, nest=True, data_root=data_path)
 num_voxels = voxels.shape[-1]
 
 
-# In[5]:
+# In[6]:
 
 
 clip_extractor = Clipper("ViT-L/14", hidden_state=True, norm_embs=True, device=device)
@@ -396,7 +390,7 @@ except: # probably ckpt is saved using deepspeed format
 print("ckpt loaded!")
 
 
-# In[6]:
+# In[7]:
 
 
 # setup text caption networks
@@ -427,7 +421,7 @@ class CLIPConverter(torch.nn.Module):
 # del state_dict
 
 
-# In[7]:
+# In[8]:
 
 
 print('Creating versatile diffusion reconstruction pipeline...')
@@ -469,124 +463,110 @@ vae = vd_pipe.vae
 noise_scheduler = vd_pipe.scheduler
 
 
-# In[8]:
+# In[9]:
 
 
 # get all reconstructions
 model.to(device)
 model.eval().requires_grad_(False)
 
+# all_images = None
 all_blurryrecons = None
 all_recons = None
 all_predcaptions = []
 all_clipvoxels = None
-all_blurryrecons_reps = None
-all_recons_reps = None
-all_predcaptions_reps = []
-all_clipvoxels_reps = None
 
 minibatch_size = 1
 num_samples_per_image = 1
 plotting = False
 recons_per_sample = 16
+
 with torch.no_grad(), torch.cuda.amp.autocast(dtype=torch.float16):
-    for r in tqdm(range(rep), desc="rep loop"):
-        for idx in tqdm(range(0,voxels.shape[0]), desc="sample loop"):
-            voxel = voxels[idx]
-            voxel = voxel.to(device)
-            for rep in range(voxel.shape[0]):
-                voxel_ridge = model.ridge(voxel[None,None,rep],0) # 0th index of subj_list
-                backbone0, clip_voxels0, blurry_image_enc0 = model.backbone(voxel_ridge)
-                if rep==0:
-                    clip_voxels = clip_voxels0
-                    backbone = backbone0
-                    blurry_image_enc = blurry_image_enc0[0]
-                else:
-                    clip_voxels += clip_voxels0
-                    backbone += backbone0
-                    blurry_image_enc += blurry_image_enc0[0]
-            clip_voxels /= voxel.shape[0]
-            backbone /= voxel.shape[0]
-            blurry_image_enc /= voxel.shape[0]
-                    
-            # Save retrieval submodule outputs
-            if all_clipvoxels is None:
-                all_clipvoxels = clip_voxels.to('cpu')
+    for idx in tqdm(range(0,voxels.shape[0]), desc="sample loop"):
+        voxel = voxels[idx]
+        voxel = voxel.to(device)
+        for rep in range(voxel.shape[0]):
+            voxel_ridge = model.ridge(voxel[None,None,rep],0) # 0th index of subj_list
+            backbone0, clip_voxels0, blurry_image_enc0 = model.backbone(voxel_ridge)
+            if rep==0:
+                clip_voxels = clip_voxels0
+                backbone = backbone0
+                blurry_image_enc = blurry_image_enc0[0]
             else:
-                all_clipvoxels = torch.vstack((all_clipvoxels, clip_voxels.to('cpu')))
-            
-            # Feed voxels through versatile diffusion diffusion prior
-            backbone = backbone.repeat(recons_per_sample, 1, 1)
-            prior_out = model.diffusion_prior.p_sample_loop(backbone.shape, 
-                            text_cond = dict(text_embed = backbone), 
-                            cond_scale = 1., timesteps = 20)
-            
-            # pred_caption_emb = clip_convert(prior_out)
-            # generated_ids = clip_text_model.generate(pixel_values=pred_caption_emb, max_length=20)
-            # generated_caption = processor.batch_decode(generated_ids, skip_special_tokens=True)
-            # all_predcaptions = np.hstack((all_predcaptions, generated_caption))
-            
-            if blurry_recon:
-                blurred_image = (autoenc.decode(blurry_image_enc/0.18215).sample/ 2 + 0.5).clamp(0,1)
+                clip_voxels += clip_voxels0
+                backbone += backbone0
+                blurry_image_enc += blurry_image_enc0[0]
+        clip_voxels /= voxel.shape[0]
+        backbone /= voxel.shape[0]
+        blurry_image_enc /= voxel.shape[0]
                 
-                im = torch.Tensor(blurred_image)
-                if all_blurryrecons is None:
-                    all_blurryrecons = im.cpu()
-                else:
-                    all_blurryrecons = torch.vstack((all_blurryrecons, im.cpu()))
-                if plotting:
-                    plt.figure(figsize=(2,2))
-                    plt.imshow(transforms.ToPILImage()(im))
-                    plt.axis('off')
-                    plt.show()
-            
-            # Feed diffusion prior outputs through versatile diffusion
-            text_token = None
-            generator = torch.Generator(device=device)
-            samples, brain_recons, best_picks = utils.versatile_diffusion_recon(brain_clip_embeddings=prior_out, 
-                                proj_embeddings = clip_voxels, 
-                                img_lowlevel = blurred_image, 
-                                img2img_strength = .85, 
-                                text_token=text_token,
-                                clip_extractor = clip_extractor, 
-                                vae=vae, 
-                                unet=unet, 
-                                noise_scheduler=noise_scheduler, 
-                                generator=generator,
-                                num_inference_steps = num_inference_steps,
-                                recons_per_sample=recons_per_sample)
-            if all_recons is None:
-                all_recons = samples.cpu()
-            else:
-                all_recons = torch.vstack((all_recons, samples.cpu()))
-            if plotting:
-                for s in range(num_samples_per_image):
-                    plt.figure(figsize=(2,2))
-                    plt.imshow(transforms.ToPILImage()(samples[s]))
-                    plt.axis('off')
-                    plt.show()
-                    
-            if plotting: 
-                print(model_name)
-                err # dont actually want to run the whole thing with plotting=True
-
-    # resize outputs before saving
-    imsize = 256
-    print(all_recons.shape)
-    all_recons = transforms.Resize((imsize,imsize))(all_recons).float()
-    if blurry_recon: 
-        all_blurryrecons = transforms.Resize((imsize,imsize))(all_blurryrecons).float()
-
-            
-    if all_recons_reps is None:
-        all_recons_reps = all_recons.cpu()
-        all_blurryrecons_reps = all_blurryrecons.cpu()
-        all_clipvoxels_reps = all_clipvoxels.cpu()
-    else:
-        all_recons_reps = torch.vstack((all_recons_reps, all_recons.cpu()))
-        all_blurryrecons_reps = torch.vstack((all_blurryrecons_reps, all_blurryrecons.cpu()))
-        all_clipvoxels_reps = torch.vstack((all_clipvoxels_reps, all_clipvoxels.cpu()))
+        # Save retrieval submodule outputs
+        if all_clipvoxels is None:
+            all_clipvoxels = clip_voxels.to('cpu')
+        else:
+            all_clipvoxels = torch.vstack((all_clipvoxels, clip_voxels.to('cpu')))
         
+        # Feed voxels through versatile diffusion diffusion prior
+        backbone = backbone.repeat(recons_per_sample, 1, 1)
+        prior_out = model.diffusion_prior.p_sample_loop(backbone.shape, 
+                        text_cond = dict(text_embed = backbone), 
+                        cond_scale = 1., timesteps = 20)
+        
+        # pred_caption_emb = clip_convert(prior_out)
+        # generated_ids = clip_text_model.generate(pixel_values=pred_caption_emb, max_length=20)
+        # generated_caption = processor.batch_decode(generated_ids, skip_special_tokens=True)
+        # all_predcaptions = np.hstack((all_predcaptions, generated_caption))
+        
+        if blurry_recon:
+            blurred_image = (autoenc.decode(blurry_image_enc/0.18215).sample/ 2 + 0.5).clamp(0,1)
+            
+            im = torch.Tensor(blurred_image)
+            if all_blurryrecons is None:
+                all_blurryrecons = im.cpu()
+            else:
+                all_blurryrecons = torch.vstack((all_blurryrecons, im.cpu()))
+            if plotting:
+                plt.figure(figsize=(2,2))
+                plt.imshow(transforms.ToPILImage()(im))
+                plt.axis('off')
+                plt.show()
+        
+        # Feed diffusion prior outputs through versatile diffusion
+        text_token = None
+        generator = torch.Generator(device=device)
+        samples, brain_recons, best_picks = utils.versatile_diffusion_recon(brain_clip_embeddings=prior_out, 
+                              proj_embeddings = clip_voxels, 
+                              img_lowlevel = blurred_image, 
+                              img2img_strength = .85, 
+                              text_token=text_token,
+                              clip_extractor = clip_extractor, 
+                              vae=vae, 
+                              unet=unet, 
+                              noise_scheduler=noise_scheduler, 
+                              generator=generator,
+                              num_inference_steps = num_inference_steps,
+                              recons_per_sample=recons_per_sample)
+        if all_recons is None:
+            all_recons = samples.cpu()
+        else:
+            all_recons = torch.vstack((all_recons, samples.cpu()))
+        if plotting:
+            for s in range(num_samples_per_image):
+                plt.figure(figsize=(2,2))
+                plt.imshow(transforms.ToPILImage()(samples[s]))
+                plt.axis('off')
+                plt.show()
+                
+        if plotting: 
+            print(model_name)
+            err # dont actually want to run the whole thing with plotting=True
+
+# resize outputs before saving
+imsize = 256
+print(all_recons.shape)
+all_recons = transforms.Resize((imsize,imsize))(all_recons).float()
+if blurry_recon: 
+    all_blurryrecons = transforms.Resize((imsize,imsize))(all_blurryrecons).float()
         
 # saving
 print(all_recons.shape)
@@ -598,17 +578,8 @@ torch.save(all_recons,f"evals/{model_name}/{model_name}_all_recons_{mode}.pt")
 torch.save(all_clipvoxels,f"evals/{model_name}/{model_name}_all_clipvoxels_{mode}.pt")
 print(f"saved {model_name} mi outputs!")
 
-print(all_recons_reps.shape)
-# torch.save(all_images,"evals/all_images.pt")
-if blurry_recon:
-    torch.save(all_blurryrecons_reps,f"evals/{model_name}/{model_name}_all_blurryrecons_{mode}_{rep}reps.pt")
-torch.save(all_recons_reps,f"evals/{model_name}/{model_name}_all_recons_{mode}_{rep}reps.pt")
-# torch.save(all_predcaptions,f"evals/{model_name}/{model_name}_all_predcaptions_{mode}.pt")
-torch.save(all_clipvoxels_reps,f"evals/{model_name}/{model_name}_all_clipvoxels_{mode}_{rep}reps.pt")
-print(f"saved {model_name} mi outputs {rep} reps!")
 
-
-# In[ ]:
+# In[10]:
 
 
 imsize = 150
@@ -641,7 +612,7 @@ for i, img in enumerate(grid_images):
 title_height = 150
 title_image = Image.new('RGB', (grid_image.width, title_height), color=(255, 255, 255))
 draw = ImageDraw.Draw(title_image)
-font = ImageFont.truetype("arial.ttf", 38)  # Change font size to 3 times bigger (15*3)
+font = ImageFont.truetype("DejaVuSans-Bold.ttf", 38)  # Change font size to 3 times bigger (15*3)
 title_text = f"Model: {model_name}, Mode: {mode}"
 bbox = draw.textbbox((0, 0), title_text, font=font)
 text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
@@ -656,7 +627,7 @@ final_image.save(f"../figs/{model_name}_{len(all_recons)}recons_{mode}.png")
 print(f"saved ../figs/{model_name}_{len(all_recons)}recons_{mode}.png")
 
 
-# In[ ]:
+# In[11]:
 
 
 if not utils.is_interactive():

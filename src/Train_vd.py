@@ -3,7 +3,7 @@
 
 # # Import packages & functions
 
-# In[1]:
+# In[5]:
 
 
 import os
@@ -27,8 +27,6 @@ import torch.nn as nn
 from torchvision import transforms
 from accelerate import Accelerator
 
-# os.chdir("/home/naxos2-raid25/ojeda040/local/ojeda040/MindEye_Imagery/src")
-
 # SDXL unCLIP requires code from https://github.com/Stability-AI/generative-models/tree/main
 sys.path.append('generative_models/')
 import sgm
@@ -42,7 +40,15 @@ torch.backends.cuda.matmul.allow_tf32 = True
 import utils
 
 
-# In[ ]:
+# In[2]:
+
+
+# betas, images, _, _ = utils.load_imageryrf(subject=1, mode="all", mask=True, stimtype="object", average=False, nest=False, split=True)
+# betas, images, _, _ = utils.load_imageryrf(subject=2, mode="all", mask=True, stimtype="object", average=False, nest=False, split=True)
+# betas, images, _, _ = utils.load_imageryrf(subject=3, mode="all", mask=True, stimtype="object", average=False, nest=False, split=True)
+
+
+# In[6]:
 
 
 ### Multi-GPU config ###
@@ -66,7 +72,7 @@ else:
     batch_size = int(os.environ["GLOBAL_BATCH_SIZE"]) // num_devices
 
 
-# In[ ]:
+# In[7]:
 
 
 print("PID of this process =",os.getpid())
@@ -85,25 +91,35 @@ print = accelerator.print # only print if local_rank=0
 
 # # Configurations
 
-# In[ ]:
+# In[33]:
 
 
 # if running this interactively, can specify jupyter_args here for argparser to use
 if utils.is_interactive():
     model_name = "testing2"
     print("model_name:", model_name)
-    
+    num_sessions_var = 20
     # global_batch_size and batch_size should already be defined in the 2nd cell block
-    jupyter_args = f"--data_path=/weka/proj-fmri/shared/mindeyev2_dataset \
-                    --cache_dir=/weka/proj-fmri/shared/cache \
-                    --model_name={model_name} \
-                    --no-multi_subject --subj=1 --batch_size={batch_size} --num_sessions=3 \
-                    --hidden_dim=1024 --clip_scale=1. \
-                    --no-blurry_recon --blur_scale=.5  \
-                    --seq_past=0 --seq_future=0 \
-                    --use_prior --prior_scale=30 \
-                    --n_blocks=4 --max_lr=3e-4 --mixup_pct=.33 --num_epochs=150 --no-use_image_aug \
-                    --ckpt_interval=1 --ckpt_saving --wandb_log --multisubject_ckpt=../train_logs/multisubject_subj01_1024_24bs_nolow"
+    
+    # jupyter_args = f"--data_path=/weka/proj-fmri/shared/mindeyev2_dataset \
+    #                 --cache_dir=/weka/proj-fmri/shared/cache \
+    #                 --model_name={model_name} \
+    #                 --no-multi_subject --subj=1 --batch_size={batch_size} --num_sessions=3 \
+    #                 --hidden_dim=1024 --clip_scale=1. \
+    #                 --no-blurry_recon --blur_scale=.5  \
+    #                 --seq_past=0 --seq_future=0 \
+    #                 --use_prior --prior_scale=30 \
+    #                 --n_blocks=4 --max_lr=3e-4 --mixup_pct=.33 --num_epochs=150 --no-use_image_aug \
+    #                 --ckpt_interval=1 --ckpt_saving --wandb_log --multisubject_ckpt=../train_logs/multisubject_subj01_1024_24bs_nolow"
+
+    jupyter_args = f"--data_path=/weka/proj-medarc/shared/mindeyev2_dataset \
+                    --cache_dir=/weka/proj-medarc/shared/cache \
+                    --model_name=${model_name} \
+                    --multi_subject --subj=1 --batch_size=63 --max_lr=3e-5 --mixup_pct=.33 \
+                    --num_epochs=150 --use_prior --prior_scale=30 --clip_scale=1 --blur_scale=.5 --no-use_image_aug \
+                    --n_blocks=4 --hidden_dim=1024 --num_sessions=10 --ckpt_interval=999 --ckpt_saving \
+                    --wandb_log \
+                    --num_sessions_multi={num_sessions_var},{num_sessions_var},{num_sessions_var},{num_sessions_var},{num_sessions_var},{num_sessions_var},{num_sessions_var},{num_sessions_var}"
 
     print(jupyter_args)
     jupyter_args = jupyter_args.split()
@@ -114,7 +130,7 @@ if utils.is_interactive():
     get_ipython().run_line_magic('autoreload', '2')
 
 
-# In[ ]:
+# In[34]:
 
 
 parser = argparse.ArgumentParser(description="Model Training Configuration")
@@ -232,16 +248,15 @@ parser.add_argument(
     "--train_imageryrf",action=argparse.BooleanOptionalAction,default=False,
     help="Use the ImageryRF dataset for pretraining",
 )
-parser.add_argument(
-    "--no_nsd",action=argparse.BooleanOptionalAction,default=False,
-    help="Don't use the Natural Scenes Dataset for pretraining",
-)
-parser.add_argument(
-    "--snr_threshold",type=float,default=-1.0,
-    help="Used for calculating SNR on a whole brain to narrow down voxels.",
-)
+# parser.add_argument(
+#     "--use_imagery",action=argparse.BooleanOptionalAction,default=True,
+#     help="Use imagery trials in pretraining where available (currently only for ImageryRF)",
+# )
 parser.add_argument(
     "--mode",type=str,default="all",
+)
+parser.add_argument(
+    "--num_sessions_multi", type=str, default="40,40,32,30,40,32,40,30"
 )
 
 
@@ -274,13 +289,13 @@ if use_image_aug:
 if multi_subject:
     if train_imageryrf:
             # 9,10,11 is ImageryRF subjects
-        if no_nsd:
-            subj_list = np.arange(9,12)
-        else:
             subj_list = np.arange(1,12)
     else:
         subj_list = np.arange(1,9)
     subj_list = subj_list[subj_list != subj]
+    num_sessions_multi = num_sessions_multi.split(',')
+    num_sessions_multi = [int(num) for num in num_sessions_multi]
+    assert len(subj_list) + 1 == len(num_sessions_multi)
 else:
     subj_list = [subj]
 
@@ -291,7 +306,7 @@ print("subj_list", subj_list, "num_sessions", num_sessions)
 
 # ### Creating wds dataloader, preload betas and all 73k possible images
 
-# In[ ]:
+# In[35]:
 
 
 def my_split_by_node(urls): return urls
@@ -299,7 +314,8 @@ num_voxels_list = []
 
 if multi_subject:
     nsessions_allsubj=np.array([40, 40, 32, 30, 40, 32, 40, 30])
-    num_samples_per_epoch = (750*40) // num_devices 
+    assert all(nsessions_allsubj >= num_sessions_multi)
+    num_samples_per_epoch = (750*max(num_sessions_multi)) // num_devices 
 else:
     num_samples_per_epoch = (750*num_sessions) // num_devices 
 
@@ -312,7 +328,7 @@ print("batch_size =", batch_size, "num_iterations_per_epoch =",num_iterations_pe
 
 
 
-# In[ ]:
+# In[36]:
 
 
 train_data = {}
@@ -323,7 +339,7 @@ for s in subj_list:
     print(f"Training with {num_sessions} sessions")
     if s < 9:
         if multi_subject:
-            train_url = f"{data_path}/wds/subj{s:02d}/train/" + "{0.." + f"{nsessions_allsubj[s-1]-1}" + "}.tar"
+            train_url = f"{data_path}/wds/subj{s:02d}/train/" + "{0.." + f"{num_sessions_multi[s-1]-1}" + "}.tar"
         else:
             train_url = f"{data_path}/wds/subj{s:02d}/train/" + "{0.." + f"{num_sessions-1}" + "}.tar"
         print(train_url)
@@ -334,7 +350,9 @@ for s in subj_list:
                             .rename(behav="behav.npy", past_behav="past_behav.npy", future_behav="future_behav.npy", olds_behav="olds_behav.npy")\
                             .to_tuple(*["behav", "past_behav", "future_behav", "olds_behav"])
         train_dl[f'subj{s:02d}'] = torch.utils.data.DataLoader(train_data[f'subj{s:02d}'], batch_size=batch_size, shuffle=False, drop_last=True, pin_memory=True)
-        betas = utils.create_snr_betas(s, data_path, threshold = snr_threshold)
+
+        f = h5py.File(f'{data_path}/betas_all_subj{s:02d}_fp32_renorm.hdf5', 'r')
+        betas = f['betas'][:]
         betas = torch.Tensor(betas).to("cpu").to(data_type)
         num_voxels_list.append(betas[0].shape[-1])
         num_voxels[f'subj{s:02d}'] = betas[0].shape[-1]
@@ -422,7 +440,7 @@ seq_len = seq_past + 1 + seq_future
 print(f"currently using {seq_len} seq_len (chose {seq_past} past behav and {seq_future} future behav)")
 
 
-# In[ ]:
+# In[37]:
 
 
 # Load 73k NSD images
@@ -436,7 +454,7 @@ print("Loaded all 73k possible NSD images to cpu!", images.shape)
 
 # ### CLIP image embeddings  model
 
-# In[ ]:
+# In[38]:
 
 
 print('Creating Clipper...')
@@ -450,7 +468,7 @@ clip_extractor = Clipper(clip_variant, device=device, hidden_state=True, norm_em
 
 # ### SD VAE
 
-# In[ ]:
+# In[41]:
 
 
 if blurry_recon:
@@ -515,7 +533,7 @@ if blurry_recon:
 
 # ### MindEye modules
 
-# In[ ]:
+# In[42]:
 
 
 class MindEyeModule(nn.Module):
@@ -528,7 +546,7 @@ model = MindEyeModule()
 model
 
 
-# In[ ]:
+# In[43]:
 
 
 class RidgeRegression(torch.nn.Module):
@@ -552,7 +570,7 @@ b = torch.randn((2,seq_len,num_voxels_list[0]))
 print(b.shape, model.ridge(b,0).shape)
 
 
-# In[ ]:
+# In[44]:
 
 
 from models import BrainNetwork
@@ -572,7 +590,7 @@ print(backbone_.shape, clip_.shape, blur_[0].shape, blur_[1].shape)
 
 # ### Adding diffusion prior if use_prior=True
 
-# In[ ]:
+# In[45]:
 
 
 if use_prior:
@@ -653,7 +671,7 @@ if use_prior:
 
 # ### Setup optimizer / lr / ckpt saving
 
-# In[ ]:
+# In[46]:
 
 
 no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
@@ -725,7 +743,7 @@ num_params = utils.count_params(model)
 
 # # Weights and Biases
 
-# In[ ]:
+# In[47]:
 
 
 if local_rank==0 and wandb_log: # only use main process for wandb logging
@@ -766,7 +784,7 @@ if local_rank==0 and wandb_log: # only use main process for wandb logging
         project=wandb_project,
         name=model_name,
         config=wandb_config,
-        # resume=None,
+        resume=None,
     )
 else:
     wandb_log = False
@@ -774,7 +792,7 @@ else:
 
 # # Main
 
-# In[ ]:
+# In[48]:
 
 
 epoch = 0
@@ -783,7 +801,7 @@ best_test_loss = 1e9
 torch.cuda.empty_cache()
 
 
-# In[ ]:
+# In[49]:
 
 
 # load multisubject stage1 ckpt if set
@@ -791,7 +809,7 @@ if multisubject_ckpt is not None and not resume_from_ckpt:
     load_ckpt("last",outdir=multisubject_ckpt,load_lr=False,load_optimizer=False,load_epoch=False,strict=False,multisubj_loading=True)
 
 
-# In[ ]:
+# In[50]:
 
 
 # load saved ckpt model weights into current model
@@ -802,7 +820,7 @@ if resume_from_ckpt:
 #         load_ckpt("last",load_lr=True,load_optimizer=True,load_epoch=True)
 
 
-# In[ ]:
+# In[51]:
 
 
 train_dls = [train_dl[f'subj{s:02d}'] for s in subj_list]
@@ -854,7 +872,7 @@ for epoch in progress_bar:
     for s, (cur_subj, train_dl) in enumerate(zip(subj_list, train_dls)):
         with torch.cuda.amp.autocast(dtype=data_type):
             i = 0
-            while i < num_iterations_per_epoch:
+            while i < num_iterations_per_epoch - 1:
                 # print(f"restarting data loader at i={i} for s={s}")
                 for data in train_dl:  
                     if cur_subj < 9:
@@ -933,11 +951,10 @@ for epoch in progress_bar:
                         select_iters[f"subj{subj_list[s]:02d}_iter{i}"] = select
 
                     voxel_iters[f"subj{subj_list[s]:02d}_iter{i}"] = voxel0
-                    i +=1
-                    if ~(i<num_iterations_per_epoch):
+                    if i >= num_iterations_per_epoch-1:
                         # print(f"breaking data loader at i={i} for s={s}")
                         break
-                    
+                    i +=1
                     
                     
 

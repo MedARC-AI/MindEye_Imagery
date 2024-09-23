@@ -12,13 +12,15 @@ from tqdm import tqdm
 import utils
 
 from diffusers.models.vae import Decoder
+
 class BrainNetwork(nn.Module):
-    def __init__(self, h=4096, in_dim=15724, out_dim=768, seq_len=2, n_blocks=4, drop=.15, clip_size=768, blurry_recon=True, clip_scale=1):
+    def __init__(self, h=4096, in_dim=15724, out_dim=768, seq_len=2, n_blocks=4, drop=.15, clip_size=768, blurry_recon=True, text_clip=False, clip_scale=1):
         super().__init__()
         self.seq_len = seq_len
         self.h = h
         self.clip_size = clip_size
         self.blurry_recon = blurry_recon
+        self.text_clip = text_clip
         self.clip_scale = clip_scale
         self.mixer_blocks1 = nn.ModuleList([
             self.mixer_block1(h, drop) for _ in range(n_blocks)
@@ -30,7 +32,9 @@ class BrainNetwork(nn.Module):
         # Output linear layer
         self.backbone_linear = nn.Linear(h * seq_len, out_dim, bias=True) 
         self.clip_proj = self.projector(clip_size, clip_size, h=clip_size)
-        
+        if text_clip:
+            self.backbone_linear_txt = nn.Linear(h * seq_len, 77*clip_size, bias=True) 
+            self.clip_txt_proj = self.projector(clip_size, clip_size, h=clip_size)
         if self.blurry_recon:
             self.blin1 = nn.Linear(h*seq_len,4*28*28,bias=True)
             self.bdropout = nn.Dropout(.3)
@@ -87,7 +91,7 @@ class BrainNetwork(nn.Module):
         
     def forward(self, x):
         # make empty tensors
-        c,b = torch.Tensor([0.]), torch.Tensor([[0.],[0.]])
+        c,c_txt,b = torch.Tensor([0.]), torch.Tensor([0.]), torch.Tensor([[0.],[0.]])
         
         # Mixer blocks
         residual1 = x
@@ -103,8 +107,12 @@ class BrainNetwork(nn.Module):
             
         x = x.reshape(x.size(0), -1)
         backbone = self.backbone_linear(x).reshape(len(x), -1, self.clip_size)
+        if self.text_clip:
+            backbone_txt = self.backbone_linear_txt(x).reshape(len(x), -1, self.clip_size)
         if self.clip_scale>0:
             c = self.clip_proj(backbone)
+            if self.text_clip:
+                c_txt = self.clip_txt_proj(backbone_txt)
 
         if self.blurry_recon:
             b = self.blin1(x)
@@ -115,109 +123,8 @@ class BrainNetwork(nn.Module):
             b_aux = b_aux.view(len(b_aux), 49, 512)
             b = (self.bupsampler(b), b_aux)
         
-        return backbone, c, b
+        return backbone, c_txt, c, b
     
-# class Clipper(torch.nn.Module):
-#     def __init__(self, clip_variant, clamp_embs=False, norm_embs=False,
-#                  hidden_state=False, device=torch.device('cpu')):
-#         super().__init__()
-#         assert clip_variant in ("RN50", "ViT-L/14", "ViT-B/32", "RN50x64"), \
-#             "clip_variant must be one of RN50, ViT-L/14, ViT-B/32, RN50x64"
-#         print(clip_variant, device)
-        
-#         if clip_variant=="ViT-L/14" and hidden_state:
-#             # from transformers import CLIPVisionModelWithProjection
-#             # image_encoder = CLIPVisionModelWithProjection.from_pretrained("openai/clip-vit-large-patch14",cache_dir="/fsx/proj-medarc/fmri/cache")
-#             from transformers import CLIPVisionModelWithProjection
-#             sd_cache_dir = '/fsx/proj-fmri/shared/cache/models--shi-labs--versatile-diffusion/snapshots/2926f8e11ea526b562cd592b099fcf9c2985d0b7'
-#             image_encoder = CLIPVisionModelWithProjection.from_pretrained(sd_cache_dir, subfolder='image_encoder').eval()
-#             image_encoder = image_encoder.to(device)
-#             for param in image_encoder.parameters():
-#                 param.requires_grad = False # dont need to calculate gradients
-#             self.image_encoder = image_encoder
-#         elif hidden_state:
-#             raise Exception("hidden_state embeddings only works with ViT-L/14 right now")
-        
-#         clip_model, preprocess = clip.load(clip_variant, device=device)
-#         clip_model.eval() # dont want to train model
-#         for param in clip_model.parameters():
-#             param.requires_grad = False # dont need to calculate gradients
-            
-#         self.clip = clip_model
-#         self.clip_variant = clip_variant
-#         if clip_variant == "RN50x64":
-#             self.clip_size = (448,448)
-#         else:
-#             self.clip_size = (224,224)
-            
-#         preproc = transforms.Compose([
-#             transforms.Resize(size=self.clip_size[0], interpolation=transforms.InterpolationMode.BICUBIC),
-#             transforms.CenterCrop(size=self.clip_size),
-#             transforms.Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
-#         ])
-#         self.preprocess = preproc
-#         self.hidden_state = hidden_state
-#         self.mean = np.array([0.48145466, 0.4578275, 0.40821073])
-#         self.std = np.array([0.26862954, 0.26130258, 0.27577711])
-#         self.normalize = transforms.Normalize(self.mean, self.std)
-#         self.denormalize = transforms.Normalize((-self.mean / self.std).tolist(), (1.0 / self.std).tolist())
-#         self.clamp_embs = clamp_embs
-#         self.norm_embs = norm_embs
-#         self.device= device
-        
-#         def versatile_normalize_embeddings(encoder_output):
-#             embeds = encoder_output.last_hidden_state
-#             embeds = image_encoder.vision_model.post_layernorm(embeds)
-#             embeds = image_encoder.visual_projection(embeds)
-#             return embeds
-#         self.versatile_normalize_embeddings = versatile_normalize_embeddings
-
-#     def resize_image(self, image):
-#         # note: antialias should be False if planning to use Pinkney's Image Variation SD model
-#         return transforms.Resize(self.clip_size)(image.to(self.device))
-
-#     def embed_image(self, image):
-#         """Expects images in -1 to 1 range"""
-#         if self.hidden_state:
-#             # clip_emb = self.preprocess((image/1.5+.25).to(self.device)) # for some reason the /1.5+.25 prevents oversaturation
-#             clip_emb = self.preprocess((image).to(self.device))
-#             clip_emb = self.image_encoder(clip_emb)
-#             clip_emb = self.versatile_normalize_embeddings(clip_emb)
-#         else:
-#             clip_emb = self.preprocess(image.to(self.device))
-#             clip_emb = self.clip.encode_image(clip_emb)
-#         # input is now in CLIP space, but mind-reader preprint further processes embeddings:
-#         if self.clamp_embs:
-#             clip_emb = torch.clamp(clip_emb, -1.5, 1.5)
-#         if self.norm_embs:
-#             if self.hidden_state:        
-#                 # normalize all tokens by cls token's norm
-#                 clip_emb = clip_emb / torch.norm(clip_emb[:, 0], dim=-1).reshape(-1, 1, 1)
-#             else:
-#                 clip_emb = nn.functional.normalize(clip_emb, dim=-1)
-#         return clip_emb
-
-#     def embed_text(self, text_samples):
-#         clip_text = clip.tokenize(text_samples).to(self.device)
-#         clip_text = self.clip.encode_text(clip_text)
-#         if self.clamp_embs:
-#             clip_text = torch.clamp(clip_text, -1.5, 1.5)
-#         if self.norm_embs:
-#             clip_text = nn.functional.normalize(clip_text, dim=-1)
-#         return clip_text
-
-#     def embed_curated_annotations(self, annots):
-#         for i,b in enumerate(annots):
-#             t = ''
-#             while t == '':
-#                 rand = torch.randint(5,(1,1))[0][0]
-#                 t = b[0,rand]
-#             if i==0:
-#                 txt = np.array(t)
-#             else:
-#                 txt = np.vstack((txt,t))
-#         txt = txt.flatten()
-#         return self.embed_text(txt)
 class Clipper(torch.nn.Module):
     def __init__(self, clip_variant, clamp_embs=False, norm_embs=False,
                  hidden_state=False, device=torch.device('cpu')):
@@ -227,15 +134,29 @@ class Clipper(torch.nn.Module):
         print(clip_variant, device)
         
         if clip_variant=="ViT-L/14" and hidden_state:
-            from transformers import CLIPVisionModelWithProjection
+            from transformers import CLIPVisionModelWithProjection, CLIPModel,CLIPTokenizer,CLIPProcessor
             image_encoder = CLIPVisionModelWithProjection.from_pretrained("openai/clip-vit-large-patch14").eval()
+            tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
+            processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+            model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").eval()
+            # text_encoder = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").eval()
             # image_encoder = CLIPVisionModelWithProjection.from_pretrained("openai/clip-vit-large-patch14",cache_dir="/fsx/proj-medarc/fmri/cache")
             #from transformers import CLIPVisionModelWithProjection
             #sd_cache_dir = '/fsx/proj-medarc/fmri/cache/models--shi-labs--versatile-diffusion/snapshots/2926f8e11ea526b562cd592b099fcf9c2985d0b7'
             #image_encoder = CLIPVisionModelWithProjection.from_pretrained(sd_cache_dir, subfolder='image_encoder').eval()
             image_encoder = image_encoder.to(device)
+            # tokenizer =tokenizer.to(device)
+            # processor = processor.to(device)
+            model = model.to(device)
             for param in image_encoder.parameters():
                 param.requires_grad = False # dont need to calculate gradients
+            for param in model.parameters():
+                param.requires_grad = False # dont need to calculate gradients
+            # for param in text_encoder.parameters():
+            #     param.requires_grad = False # dont need to calculate gradients
+            self.tokenizer = tokenizer
+            self.processor = processor
+            self.model = model
             self.image_encoder = image_encoder
         elif hidden_state:
             raise Exception("hidden_state embeddings only works with ViT-L/14 right now")
@@ -268,11 +189,34 @@ class Clipper(torch.nn.Module):
         self.device= device
         
         def versatile_normalize_embeddings(encoder_output):
+            # original code:
+            # ---------------------------------------------------------------
+            # outputs = self.model.vision_model(pixel_values=pixels)
+            # z = outputs.last_hidden_state
+            # z = self.model.vision_model.post_layernorm(z)
+            # z = self.model.visual_projection(z)
+            # z_pooled = z[:, 0:1]
+            # z = z / torch.norm(z_pooled, dim=-1, keepdim=True)
+            # ---------------------------------------------------------------
             embeds = encoder_output.last_hidden_state
             embeds = image_encoder.vision_model.post_layernorm(embeds)
             embeds = image_encoder.visual_projection(embeds)
             return embeds
         self.versatile_normalize_embeddings = versatile_normalize_embeddings
+
+        def versatile_normalize_text_embeddings(encoder_output):
+            # original code:
+            # ---------------------------------------------------------------
+            # outputs = self.model.text_model(input_ids=tokens)
+            # z = self.model.text_projection(outputs.last_hidden_state)
+            # z_pooled = self.model.text_projection(outputs.pooler_output)
+            # z = z / torch.norm(z_pooled.unsqueeze(1), dim=-1, keepdim=True)
+            # ---------------------------------------------------------------
+            txt_embeds = self.model.text_projection(encoder_output.last_hidden_state)
+            txt_pooled = self.model.text_projection(encoder_output.pooler_output)
+            return txt_embeds, txt_pooled
+        self.versatile_normalize_text_embeddings = versatile_normalize_text_embeddings
+
 
     def resize_image(self, image):
         # note: antialias should be False if planning to use Pinkney's Image Variation SD model
@@ -300,13 +244,33 @@ class Clipper(torch.nn.Module):
         return clip_emb
 
     def embed_text(self, text_samples):
-        clip_text = clip.tokenize(text_samples).to(self.device)
-        clip_text = self.clip.encode_text(clip_text)
+        if self.hidden_state:
+            batch_encoding = self.tokenizer(text_samples, truncation=True, max_length=77, return_length=True,
+            return_overflowing_tokens=False, padding="max_length", return_tensors="pt").to(self.device)
+            tokens = batch_encoding["input_ids"].to(self.device)
+            clip_emb = self.model.text_model(input_ids=tokens)
+            clip_emb, clip_pooled = self.versatile_normalize_text_embeddings(clip_emb)  
+        else:          
+            clip_text = clip.tokenize(text_samples).to(self.device)
+            clip_text = self.clip.encode_text(clip_text)
         if self.clamp_embs:
             clip_text = torch.clamp(clip_text, -1.5, 1.5)
         if self.norm_embs:
-            clip_text = nn.functional.normalize(clip_text, dim=-1)
+            if self.hidden_state:        
+                # normalize all tokens by cls token's norm
+                clip_text = clip_emb / torch.norm(clip_pooled.unsqueeze(1), dim=-1).reshape(-1, 1, 1)
+            else:
+                clip_text = nn.functional.normalize(clip_text, dim=-1)
         return clip_text
+
+    # def org_embed_text(self, text_samples):
+    #     clip_text = clip.tokenize(text_samples).to(self.device)
+    #     clip_text = self.clip.encode_text(clip_text)
+    #     if self.clamp_embs:
+    #         clip_text = torch.clamp(clip_text, -1.5, 1.5)
+    #     if self.norm_embs:
+    #         clip_text = nn.functional.normalize(clip_text, dim=-1)
+    #     return clip_text
 
     def embed_curated_annotations(self, annots):
         for i,b in enumerate(annots):
@@ -487,6 +451,151 @@ class BrainDiffusionPrior(DiffusionPrior):
         # undo the scaling so we can directly use it for real mse loss and reconstruction
         return loss, pred
 
+class PriorNetwork_txt(nn.Module):
+    def __init__(
+        self,
+        dim,
+        num_timesteps = None,
+        num_time_embeds = 1,
+        # num_image_embeds = 1,
+        # num_brain_embeds = 1,
+        num_tokens = 257,
+        causal = True,
+        learned_query_mode = 'none',
+        **kwargs
+    ):
+        super().__init__()
+        self.dim = dim
+        self.num_time_embeds = num_time_embeds
+        self.continuous_embedded_time = not exists(num_timesteps)
+        self.learned_query_mode = learned_query_mode
+
+        self.to_time_embeds = nn.Sequential(
+            nn.Embedding(num_timesteps, dim * num_time_embeds) if exists(num_timesteps) else nn.Sequential(SinusoidalPosEmb(dim), MLP(dim, dim * num_time_embeds)), # also offer a continuous version of timestep embeddings, with a 2 layer MLP
+            Rearrange('b (n d) -> b n d', n = num_time_embeds)
+        )
+
+        if self.learned_query_mode == 'token':
+            self.learned_query = nn.Parameter(torch.randn(num_tokens, dim))
+        if self.learned_query_mode == 'pos_emb':
+            scale = dim ** -0.5
+            self.learned_query = nn.Parameter(torch.randn(num_tokens, dim) * scale)
+        if self.learned_query_mode == 'all_pos_emb':
+            scale = dim ** -0.5
+            self.learned_query = nn.Parameter(torch.randn(num_tokens*2+1, dim) * scale)
+        self.causal_transformer = FlaggedCausalTransformer(dim = dim, causal=causal, **kwargs)
+
+        self.null_brain_embeds = nn.Parameter(torch.randn(num_tokens, dim))
+        self.null_image_embed = nn.Parameter(torch.randn(num_tokens, dim))
+
+        self.num_tokens = num_tokens
+        self.self_cond = False
+
+    def forward_with_cond_scale(
+        self,
+        *args,
+        cond_scale = 1.,
+        **kwargs
+    ):
+        logits = self.forward(*args, **kwargs)
+
+        if cond_scale == 1:
+            return logits
+
+        null_logits = self.forward(*args, brain_cond_drop_prob = 1., image_cond_drop_prob = 1, **kwargs)
+        return null_logits + (logits - null_logits) * cond_scale
+
+    def forward(
+        self,
+        image_embed,
+        diffusion_timesteps,
+        *,
+        self_cond=None,
+        brain_embed=None,
+        text_embed=None,
+        brain_cond_drop_prob = 0.,
+        text_cond_drop_prob = None,
+        image_cond_drop_prob = 0.
+    ):
+        if text_embed is not None:
+            brain_embed = text_embed
+        if text_cond_drop_prob is not None:
+            brain_cond_drop_prob = text_cond_drop_prob
+        # WE MAY WANT THESE
+        # image_embed = image_embed.view(len(image_embed),-1,768)
+        # brain_embed = brain_embed.view(len(brain_embed),-1,768)
+        
+        # text_embed = text_embed.view(len(text_embed),-1,768)
+        # print(*image_embed.shape)  
+        # for image : [257,768]   for txt : [1,768]
+        # print(*image_embed.shape, image_embed.device, image_embed.dtype)
+        # print("image_embed shape:", image_embed.shape)
+
+        batch = text_embed.shape[0]
+        _, _, dim, device, dtype = *image_embed.shape, image_embed.device, image_embed.dtype
+        # num_time_embeds, num_image_embeds, num_brain_embeds = self.num_time_embeds, self.num_image_embeds, self.num_brain_embeds
+        
+        # classifier free guidance masks
+        brain_keep_mask = prob_mask_like((batch,), 1 - brain_cond_drop_prob, device = device)
+        brain_keep_mask = rearrange(brain_keep_mask, 'b -> b 1 1')
+
+        image_keep_mask = prob_mask_like((batch,), 1 - image_cond_drop_prob, device = device)
+        image_keep_mask = rearrange(image_keep_mask, 'b -> b 1 1')
+
+        # mask out brain embeddings with null brain embeddings
+
+        # import pdb; pdb.set_trace()
+        null_brain_embeds = self.null_brain_embeds.to(brain_embed.dtype)
+        brain_embed = torch.where(
+            brain_keep_mask,
+            brain_embed,
+            null_brain_embeds[None]
+        )
+
+        # mask out image embeddings with null image embeddings
+        null_image_embed = self.null_image_embed.to(image_embed.dtype)
+        image_embed = torch.where(
+            image_keep_mask,
+            image_embed,
+            null_image_embed[None]
+        )
+
+        # whether brain embedding is used for conditioning depends on whether brain encodings are available for attention (for classifier free guidance, even though it seems from the paper it was not used in the prior ddpm, as the objective is different)
+        # but let's just do it right
+        if self.continuous_embedded_time:
+            # if continuous cast to flat, else keep int for indexing embeddings
+            diffusion_timesteps = diffusion_timesteps.type(dtype)
+        time_embed = self.to_time_embeds(diffusion_timesteps)
+
+        if self.learned_query_mode == 'token':
+            learned_queries = repeat(self.learned_query, 'n d -> b n d', b = batch)
+        elif self.learned_query_mode == 'pos_emb':
+            pos_embs = repeat(self.learned_query, 'n d -> b n d', b = batch)
+            image_embed = image_embed + pos_embs
+            learned_queries = torch.empty((batch, 0, dim), device=brain_embed.device)
+        elif self.learned_query_mode == 'all_pos_emb':
+            pos_embs = repeat(self.learned_query, 'n d -> b n d', b = batch)
+            learned_queries = torch.empty((batch, 0, dim), device=brain_embed.device)
+        else:
+            learned_queries = torch.empty((batch, 0, dim), device=brain_embed.device)
+        
+        tokens = torch.cat((
+            brain_embed,  # 77
+            time_embed,  # 1
+            image_embed,  # 77
+            learned_queries  # 77
+        ), dim = -2)
+        if self.learned_query_mode == 'all_pos_emb':
+            tokens = tokens + pos_embs
+
+        # attend
+        tokens = self.causal_transformer(tokens)
+
+        # get learned query, which should predict the image embedding (per DDPM timestep)
+        pred_image_embed = tokens[..., -self.num_tokens:, :]
+
+        return pred_image_embed
+
 class PriorNetwork(nn.Module):
     def __init__(
         self,
@@ -562,10 +671,19 @@ class PriorNetwork(nn.Module):
         # brain_embed = brain_embed.view(len(brain_embed),-1,768)
         
         # text_embed = text_embed.view(len(text_embed),-1,768)
-        # print(*image_embed.shape)
+        # print(*image_embed.shape)  
+        # for image : [257,768]   for txt : [1,768]
         # print(*image_embed.shape, image_embed.device, image_embed.dtype)
-        
-        batch, _, dim, device, dtype = *image_embed.shape, image_embed.device, image_embed.dtype
+        # print("image_embed shape:", image_embed.shape)
+
+        # if len(image_embed.shape) == 2:
+        #     batch, dim = image_embed.shape
+        #     device = image_embed.device
+        #     dtype = image_embed.dtype
+        # else:
+        batch = text_embed.shape[0]
+        _, _, dim, device, dtype = *image_embed.shape, image_embed.device, image_embed.dtype
+        # print(f'batch is {batch}')
         # num_time_embeds, num_image_embeds, num_brain_embeds = self.num_time_embeds, self.num_image_embeds, self.num_brain_embeds
         
         # classifier free guidance masks
@@ -579,6 +697,9 @@ class PriorNetwork(nn.Module):
 
         # import pdb; pdb.set_trace()
         null_brain_embeds = self.null_brain_embeds.to(brain_embed.dtype)
+        # print("brain_keep_mask shape:", brain_keep_mask.shape)
+        # print("brain_embed shape:", brain_embed.shape)
+        # print("null_brain_embeds shape:", null_brain_embeds.shape)
         brain_embed = torch.where(
             brain_keep_mask,
             brain_embed,
@@ -587,6 +708,7 @@ class PriorNetwork(nn.Module):
 
         # mask out image embeddings with null image embeddings
         null_image_embed = self.null_image_embed.to(image_embed.dtype)
+        
         image_embed = torch.where(
             image_keep_mask,
             image_embed,
