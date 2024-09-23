@@ -20,6 +20,7 @@ import json
 from PIL import Image
 import requests
 import time 
+import h5py
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -630,7 +631,7 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                             np.logical_or(exps=='imgB_1', exps=='imgB_2')),
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
     # Load normalized betas
-    if snr == -1.0
+    if snr == -1.0:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
     else:
         if not os.path.exists(f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
@@ -997,6 +998,19 @@ def create_whole_region_imagery_unnormalized(subject = 1, mask=True, GLMdenoise=
     torch.save(whole_region, file)
     return whole_region
 
+def convert_from_pt_to_hdf5(load_data_path="../dataset/", save_data_path="../dataset/"):
+    
+    # Load the tensor
+    tensor = torch.load(load_data_path).requires_grad_(False).to("cpu")
+    
+    # Convert the tensor to a numpy array (h5py works with numpy arrays)
+    tensor_numpy = tensor.numpy()
+    
+    # Save the tensor to the specified HDF5 format
+    with h5py.File(save_data_path, 'w') as hdf:
+        hdf.create_dataset('betas', data=tensor_numpy)
+    
+    
 def create_whole_region_imagery_normalized(subject = 1, mask=True, GLMdenoise=True, data_path="../dataset/"):
     img_stim_file = f"{data_path}/nsddata_stimuli/stimuli/nsd/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -1068,11 +1082,13 @@ def create_snr_betas(subject, threshold = -1.0, data_path="../dataset/"):
     return betas
 
 def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
+    
     if betas is None:
         beta_file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_include_heldout.pt"
         x = torch.load(beta_file).requires_grad_(False).to("cpu")
     else:
         x = betas
+        
     # Load stimulus descriptions
     stim_descriptions = pd.read_csv(f"{data_path}/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0)
 
@@ -1119,3 +1135,4 @@ def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
     snr_mask = (snr_tensor != 0.0).any(dim=0)
 
     return snr_mask
+
