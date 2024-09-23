@@ -630,14 +630,14 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                             np.logical_or(exps=='imgB_1', exps=='imgB_2')),
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
     # Load normalized betas
-    if snr == -1.0
+    if snr == -1.0:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
     else:
-        if not os.path.exists(f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
+        if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
             create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
             create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
-        x = torch.load(f"{data_path}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
-        snr_mask = calculate_snr_mask(subject, threshold, data_path=data_path)
+        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
+        snr_mask = calculate_snr_mask(subject, snr, data_path=data_root)
         x = x[:,snr_mask]
     # Find the trial indices conditioned on the type of trials we want to load
     cond_im_idx = {n: [image_map[c] for c in cues[idx]] for n,idx in cond_idx.items()}
