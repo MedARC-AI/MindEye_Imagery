@@ -635,7 +635,6 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
     # Load normalized betas
     if snr == -1.0:
-    if snr == -1.0:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
     else:
         if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
@@ -1066,23 +1065,28 @@ def calculate_snr(betas):
     snr = torch.nan_to_num(snr)
     return snr, signal, noise
 
-def create_snr_betas(subject, threshold = -1.0, data_path="../dataset/"):
+def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/", threshold=-1.0):
     
     create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
     create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
     
     if threshold != -1.0:
-        beta_file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_include_heldout.pt"
-        x = torch.load(beta_file).requires_grad_(False).to("cpu")
-        snr_mask = calculate_snr_mask(subject, threshold, betas=x, data_path=data_path)
+        # Load the tensor from the HDF5 file
+        with h5py.File(f'{data_path}/betas_all_whole_brain_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+    
+        snr_mask = calculate_snr_mask(subject, threshold, betas=betas, data_path=data_path)
+        
         # Filter out the zero columns
-        betas = x[:, snr_mask]
+        betas = betas[:, snr_mask]
         
     else:      
-        f = h5py.File(f'{data_path}/betas_all_subj{s:02d}_fp32_renorm.hdf5', 'r')
-        betas = f['betas'][:]
+        with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
         
-    return betas
+    return betas.to(data_type)
 
 def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
     
