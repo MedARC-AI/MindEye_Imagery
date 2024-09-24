@@ -5,15 +5,19 @@
 1. Git clone this repository:
 
 ```
-git clone https://github.com/MedARC-AI/MindEyeV2.git
+git clone https://github.com/MedARC-AI/MindEye_Imagery.git
 ```
 
-2. Download https://huggingface.co/datasets/pscotti/mindeyev2 and place them in the same folder as your git clone.
-Warning: **This will download over 120 GB of data!** You may want to only download some parts of the huggingface dataset (e.g., not all the pretrained models contained in "train_logs")
+2. Download necessary project files from the two hugginface repositories and place them in the same folder as your git clone.
+    - https://huggingface.co/datasets/pscotti/mindeyev2
+    - https://huggingface.co/datasets/reesekneeland/mindeye_imagery
+    
+Warning: **This will download over 300 GB of data!** You may want to only download some parts of the huggingface dataset (e.g., not all the pretrained models contained in "train_logs", only one of the preparations of brain activity—whole brain or not—whole brain betas are only necessary for SNR thresholding.)
 
 ```
 cd MindEyeV2
 git clone https://huggingface.co/datasets/pscotti/mindeyev2 .
+git clone https://huggingface.co/datasets/reesekneeland/mindeye_imagery .
 ```
 
 or for specifically downloading only parts of the dataset (will need to edit depending on what you want to download):
@@ -24,7 +28,7 @@ snapshot_download(repo_id="pscotti/mindeyev2", repo_type = "dataset", revision="
 hf_hub_download(repo_id="pscotti/mindeyev2", filename="coco_images_224_float16.hdf5", repo_type="dataset")
 ```
 
-3. Run ```. src/setup.sh``` to install a new "fmri" virtual environment. Make sure the virtual environment is activated with "source fmri/bin/activate".
+3. Run ```. src/setup.sh``` to install a new "mei-env" virtual environment. Make sure the virtual environment is activated with "source mei-env/bin/activate".
 
 ## Usage
 
@@ -33,6 +37,6 @@ hf_hub_download(repo_id="pscotti/mindeyev2", filename="coco_images_224_float16.h
     - To train a single-subject model, set ```--no-multi_subject``` and ```--subj=#``` where # is the subject from NSD you wish to train
     - To train a multi-subject model (i.e., pretraining), set ```--multi_subject``` and ```--subj=#``` where # is the one subject out of 8 NSD subjects to **not** include in the pretraining.
     - To fine-tune from a multi-subject model, set ```--no-multi_subject``` and ```--multisubject_ckpt=path_to_your_pretrained_ckpt_folder```
-- ```src/recon_inference.ipynb``` will run inference on a pretrained model, outputting tensors of reconstructions/predicted captions/etc.
-- ```src/final_evaluations.ipynb``` will visualize reconstructions output from ```src/recon_inference``` and compute quantitative metrics.
+- ```src/recon_inference_mi.ipynb``` will run inference on the NSD Imagery dataset using a pretrained model, outputting tensors of reconstructions/predicted captions/etc.
+- ```src/final_evaluations_multi_mi.ipynb``` will visualize reconstructions the best and median output from ```src/recon_inference_mi``` and compute quantitative metrics.
 - See .slurm files for example scripts for running the .ipynb notebooks as batch jobs submitted to Slurm job scheduling.

@@ -170,3 +170,6 @@ src/evals/
 src/tables/
 *.hdf5
 *.pt
+dataset
+.gitignore
+cache
