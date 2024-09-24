@@ -969,6 +969,7 @@ def create_whole_region_normalized(subject = 1, include_heldout=False, mask_nsd_
 
     # Save the tensor of normalized data
     torch.save(whole_region_norm, file)
+    convert_from_pt_to_hdf5(file, f"{data_path}/betas_all_whole_brain_subj{subject:02d}_fp32_renorm.hdf5")
     
 def create_whole_region_imagery_unnormalized(subject = 1, mask=True, GLMdenoise=True, data_path="../dataset/"):
     
