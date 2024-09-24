@@ -1,7 +1,7 @@
 # Write all the code in jupyter notebook then covert the file.
 jupyter nbconvert Train.ipynb --to python
 export NUM_GPUS=1  # Set to equal gres=gpu:#!
-export BATCH_SIZE=63 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
+export BATCH_SIZE=56 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
 export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
 export CUDA_VISIBLE_DEVICES="1" # Set's the GPU device
 

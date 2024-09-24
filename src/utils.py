@@ -1121,3 +1121,24 @@ def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
     snr_mask = (snr_tensor != 0.0).any(dim=0)
 
     return snr_mask
+
+
+def get_kastner_masks(subject, data_path):
+    kastner_labels = f"{data_path}/nsddata/freesurfer/subj0{subject}/label/Kastner2015.mgz.ctab"
+    brainmask_inflated = nib.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/brainmask_inflated_1.0.nii").get_fdata()
+    brainmask_inflated = np.nan_to_num(brainmask_inflated)
+    brainmask_inflated = np.where(brainmask_inflated==1.0, True, False)
+    
+    masks = []
+    for hemi in ["lh", "rh"]:
+        masks.append(nib.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/{hemi}.Kastner2015.nii.gz").get_fdata())
+    kastner_mask = masks[0] + masks[1]
+    kastner_mask = kastner_mask[brainmask_inflated]
+    with open(kastner_labels, 'r') as file:
+        labels = file.read().splitlines()
+    kastner_mask_labeled = {}
+    for label in labels[1:]:
+        label = label.split(" ")
+        kastner_mask_labeled[label[1].strip()] = np.where(kastner_mask==int(label[0]), True, False)
+        
+    return kastner_mask_labeled
