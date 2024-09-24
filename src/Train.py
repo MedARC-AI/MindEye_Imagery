@@ -3,7 +3,7 @@
 
 # # Import packages & functions
 
-# In[1]:
+# In[2]:
 
 
 import os
@@ -64,7 +64,7 @@ else:
     batch_size = int(os.environ["GLOBAL_BATCH_SIZE"]) // num_devices
 
 
-# In[ ]:
+# In[4]:
 
 
 print("PID of this process =",os.getpid())
@@ -83,17 +83,17 @@ print = accelerator.print # only print if local_rank=0
 
 # # Configurations
 
-# In[ ]:
+# In[5]:
 
 
 # if running this interactively, can specify jupyter_args here for argparser to use
 if utils.is_interactive():
-    model_name = "testing2"
+    model_name = "testing_txt_combined"
     print("model_name:", model_name)
     
     # global_batch_size and batch_size should already be defined in the 2nd cell block
-    jupyter_args = f"--data_path=/weka/proj-fmri/shared/mindeyev2_dataset \
-                    --cache_dir=/weka/proj-fmri/shared/cache \
+    jupyter_args = f"--data_path=/weka/proj-medarc/shared/mindeyev2_dataset \
+                    --cache_dir=/weka/proj-medarc/shared/cache \
                     --model_name={model_name} \
                     --no-multi_subject --subj=1 --batch_size={batch_size} --num_sessions=3 \
                     --hidden_dim=1024 --clip_scale=1. \
@@ -101,7 +101,7 @@ if utils.is_interactive():
                     --seq_past=0 --seq_future=0 \
                     --use_prior --prior_scale=30 \
                     --n_blocks=4 --max_lr=3e-4 --mixup_pct=.33 --num_epochs=150 --no-use_image_aug \
-                    --ckpt_interval=1 --ckpt_saving --wandb_log --multisubject_ckpt=../train_logs/multisubject_subj01_1024_24bs_nolow"
+                    --ckpt_interval=1 --ckpt_saving"
 
     print(jupyter_args)
     jupyter_args = jupyter_args.split()
@@ -112,7 +112,7 @@ if utils.is_interactive():
     get_ipython().run_line_magic('autoreload', '2')
 
 
-# In[ ]:
+# In[6]:
 
 
 parser = argparse.ArgumentParser(description="Model Training Configuration")
@@ -245,6 +245,10 @@ parser.add_argument(
 parser.add_argument(
     "--mode",type=str,default="all",
 )
+parser.add_argument(
+    "--dual_guidance",action=argparse.BooleanOptionalAction,default=False,
+    help="Use the decoded captions for dual guidance",
+)
 
 
 if utils.is_interactive():
@@ -293,7 +297,7 @@ print("subj_list", subj_list, "num_sessions", num_sessions)
 
 # ### Creating wds dataloader, preload betas and all 73k possible images
 
-# In[ ]:
+# In[7]:
 
 
 def my_split_by_node(urls): return urls
@@ -314,7 +318,7 @@ print("batch_size =", batch_size, "num_iterations_per_epoch =",num_iterations_pe
 
 
 
-# In[ ]:
+# In[8]:
 
 
 train_data = {}
@@ -338,9 +342,9 @@ for s in subj_list:
                             .to_tuple(*["behav", "past_behav", "future_behav", "olds_behav"])
         train_dl[f'subj{s:02d}'] = torch.utils.data.DataLoader(train_data[f'subj{s:02d}'], batch_size=batch_size, shuffle=False, drop_last=True, pin_memory=True)
 
-        f = h5py.File(f'{data_path}/betas_all_subj{s:02d}_fp32_renorm.hdf5', 'r')
-        betas = utils.create_snr_betas(s, data_path, threshold = snr_threshold)
+        betas = utils.create_snr_betas(subject=s, data_path=data_path, threshold = snr_threshold)
         betas = torch.Tensor(betas).to("cpu").to(data_type)
+        print(betas.shape)
         num_voxels_list.append(betas[0].shape[-1])
         num_voxels[f'subj{s:02d}'] = betas[0].shape[-1]
         voxels[f'subj{s:02d}'] = betas
@@ -427,7 +431,7 @@ seq_len = seq_past + 1 + seq_future
 print(f"currently using {seq_len} seq_len (chose {seq_past} past behav and {seq_future} future behav)")
 
 
-# In[ ]:
+# In[9]:
 
 
 # Load 73k NSD images
@@ -435,13 +439,16 @@ f = h5py.File(f'{data_path}/coco_images_224_float16.hdf5', 'r')
 images = f['images'] # if you go OOM you can remove the [:] so it isnt preloaded to cpu! (will require a few edits elsewhere tho)
 # images = torch.Tensor(images).to("cpu").to(data_type)
 print("Loaded all 73k possible NSD images to cpu!", images.shape)
+# Load 73k NSD captions
+captions = np.load(f'{data_path}/preprocessed_data/annots_73k.npy')
+print("Loaded all 73k NSD captions to cpu!", captions.shape)
 
 
 # ## Load models
 
 # ### CLIP image embeddings  model
 
-# In[ ]:
+# In[11]:
 
 
 print('Creating Clipper...')
@@ -455,7 +462,7 @@ clip_extractor = Clipper(clip_variant, device=device, hidden_state=True, norm_em
 
 # ### SD VAE
 
-# In[ ]:
+# In[12]:
 
 
 if blurry_recon:
@@ -520,7 +527,7 @@ if blurry_recon:
 
 # ### MindEye modules
 
-# In[ ]:
+# In[13]:
 
 
 class MindEyeModule(nn.Module):
@@ -533,10 +540,10 @@ model = MindEyeModule()
 model
 
 
-# In[ ]:
+# In[14]:
 
 
-class RidgeRegression(torch.nn.Module):
+class RidgeRegression(nn.Module):
     # make sure to add weight_decay when initializing optimizer
     def __init__(self, input_sizes, out_features, seq_len): 
         super(RidgeRegression, self).__init__()
@@ -557,13 +564,13 @@ b = torch.randn((2,seq_len,num_voxels_list[0]))
 print(b.shape, model.ridge(b,0).shape)
 
 
-# In[ ]:
+# In[15]:
 
 
 from models import BrainNetwork
 model.backbone = BrainNetwork(h=hidden_dim, in_dim=hidden_dim, seq_len=seq_len, n_blocks=n_blocks,
                           clip_size=clip_emb_dim, out_dim=clip_emb_dim*clip_seq_dim, 
-                          blurry_recon=blurry_recon, clip_scale=clip_scale)
+                          blurry_recon=blurry_recon, clip_scale=clip_scale, text_clip=dual_guidance)
 utils.count_params(model.backbone)
 utils.count_params(model)
 
@@ -571,13 +578,13 @@ utils.count_params(model)
 b = torch.randn((2,seq_len,hidden_dim))
 print("b.shape",b.shape)
 
-backbone_, clip_, blur_ = model.backbone(b)
-print(backbone_.shape, clip_.shape, blur_[0].shape, blur_[1].shape)
+backbone_,backbone_txt_, clip_, blur_ = model.backbone(b)
+print(backbone_.shape, backbone_txt_.shape, clip_.shape, blur_[0].shape, blur_[1].shape)
 
 
 # ### Adding diffusion prior if use_prior=True
 
-# In[ ]:
+# In[16]:
 
 
 if use_prior:
@@ -599,7 +606,6 @@ if use_prior:
             num_tokens = clip_seq_dim,
             learned_query_mode="pos_emb"
         )
-
     model.diffusion_prior = BrainDiffusionPrior(
         net=prior_network,
         image_embed_dim=out_dim,
@@ -608,7 +614,27 @@ if use_prior:
         cond_drop_prob=0.2,
         image_embed_scale=None,
     )
+    if dual_guidance:
+        prior_network_txt = PriorNetwork_txt(
+                dim=out_dim,
+                depth=depth,
+                dim_head=dim_head,
+                heads=heads,
+                causal=False,
+                num_tokens = clip_txt_seq_dim,
+                learned_query_mode="pos_emb"
+            )
     
+
+        model.diffusion_prior_txt = BrainDiffusionPrior(
+            net=prior_network_txt,
+            image_embed_dim=out_dim,
+            condition_on_text_encodings=False,
+            timesteps=timesteps,
+            cond_drop_prob=0.2,
+            image_embed_scale=None,
+        )
+        utils.count_params(model.diffusion_prior_txt)
     utils.count_params(model.diffusion_prior)
     utils.count_params(model)
     
@@ -658,7 +684,7 @@ if use_prior:
 
 # ### Setup optimizer / lr / ckpt saving
 
-# In[ ]:
+# In[17]:
 
 
 no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
@@ -671,8 +697,14 @@ opt_grouped_parameters = [
 if use_prior:
     opt_grouped_parameters.extend([
         {'params': [p for n, p in model.diffusion_prior.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': 1e-2},
-        {'params': [p for n, p in model.diffusion_prior.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        {'params': [p for n, p in model.diffusion_prior.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0},
     ])
+    if dual_guidance:
+        opt_grouped_parameters.extend([
+        {'params': [p for n, p in model.diffusion_prior_txt.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': 1e-2},
+        {'params': [p for n, p in model.diffusion_prior_txt.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        ])
+        
 
 optimizer = torch.optim.AdamW(opt_grouped_parameters, lr=max_lr)
 
@@ -730,7 +762,7 @@ num_params = utils.count_params(model)
 
 # # Weights and Biases
 
-# In[ ]:
+# In[18]:
 
 
 if local_rank==0 and wandb_log: # only use main process for wandb logging
@@ -779,7 +811,7 @@ else:
 
 # # Main
 
-# In[ ]:
+# In[19]:
 
 
 epoch = 0
@@ -788,7 +820,7 @@ best_test_loss = 1e9
 torch.cuda.empty_cache()
 
 
-# In[ ]:
+# In[20]:
 
 
 # load multisubject stage1 ckpt if set
@@ -796,7 +828,7 @@ if multisubject_ckpt is not None and not resume_from_ckpt:
     load_ckpt("last",outdir=multisubject_ckpt,load_lr=False,load_optimizer=False,load_epoch=False,strict=False,multisubj_loading=True)
 
 
-# In[ ]:
+# In[21]:
 
 
 # load saved ckpt model weights into current model
@@ -807,7 +839,7 @@ if resume_from_ckpt:
 #         load_ckpt("last",load_lr=True,load_optimizer=True,load_epoch=True)
 
 
-# In[ ]:
+# In[22]:
 
 
 train_dls = [train_dl[f'subj{s:02d}'] for s in subj_list]
@@ -816,12 +848,13 @@ model, optimizer, *train_dls, lr_scheduler = accelerator.prepare(model, optimize
 # leaving out test_dl since we will only have local_rank 0 device do evals
 
 
-# In[1]:
+# In[ ]:
 
 
 print(f"{model_name} starting with epoch {epoch} / {num_epochs}")
 progress_bar = tqdm(range(epoch,num_epochs), ncols=1200, disable=(local_rank!=0))
 test_image, test_voxel = None, None
+test_caption = []
 mse = nn.MSELoss()
 l1 = nn.L1Loss()
 soft_loss_temps = utils.cosine_anneal(0.004, 0.0075, num_epochs - int(mixup_pct * num_epochs))
@@ -835,7 +868,9 @@ for epoch in progress_bar:
     test_bwd_percent_correct = 0.
     
     recon_cossim = 0.
+    recon_cossim_txt = 0.
     test_recon_cossim = 0.
+    test_recon_cossim_txt = 0.
     recon_mse = 0.
     test_recon_mse = 0.
 
@@ -845,7 +880,9 @@ for epoch in progress_bar:
     test_loss_clip_total = 0.
     
     loss_prior_total = 0.
+    loss_prior_total_txt = 0.
     test_loss_prior_total = 0.
+    test_loss_prior_total_txt = 0.
 
     blurry_pixcorr = 0.
     test_blurry_pixcorr = 0. # needs >.456 to beat low-level subj01 results in mindeye v1
@@ -853,7 +890,8 @@ for epoch in progress_bar:
     # pre-load all batches for this epoch (it's MUCH faster to pre-load in bulk than to separate loading per batch)
     voxel_iters = {} # empty dict because diff subjects have differing # of voxels
     image_iters = torch.zeros(num_iterations_per_epoch, batch_size*len(subj_list), 3, 224, 224).float()
-    annot_iters = {}
+    caption_iters = {}
+
     perm_iters, betas_iters, select_iters = {}, {}, {}
     # print(f"num_iterations_per_epoch: {num_iterations_per_epoch}, batch_size: {batch_size}, len(subj_list): {len(subj_list)}")
     for s, (cur_subj, train_dl) in enumerate(zip(subj_list, train_dls)):
@@ -874,11 +912,16 @@ for epoch in progress_bar:
                         # while image0.shape[0] < batch_size:
                         #     image0 = torch.cat((image0, image0[0].unsqueeze(0)), dim=0)
                         image_idx = behav0[:,0,0].cpu().long().numpy()
-                        image0, image_sorted_idx = np.unique(image_idx, return_index=True)                
-                        if len(image0) != len(image_idx): # hdf5 cant handle duplicate indexing
-                            continue
-                        image0 = torch.tensor(images[image0], dtype=data_type)
-                        image_iters[i, s*batch_size:s*batch_size+batch_size] = image0
+                        local_idx, image_sorted_idx = np.unique(image_idx, return_index=True)                
+                        # if len(image0) != len(image_idx): # hdf5 cant handle duplicate indexing
+                        #     continue
+                        image0 = torch.tensor(images[local_idx], dtype=data_type)
+                        image_iters[i, s*batch_size:s*batch_size+image0.shape[0]] = image0
+                        caption0 = captions[local_idx]
+                        caption_iters[f"subj{subj_list[s]:02d}_iter{i}"] = caption0
+                        # print(caption0.shape)
+                        # for caption in caption0:
+                        #     caption_iters.append(caption)
                         
                         # voxel_sorted_idx = behav0[:,0,5].cpu().long().numpy()
                         # voxel_sorted_idx = np.unique(np.sort(voxel_sorted_idx))
@@ -955,8 +998,8 @@ for epoch in progress_bar:
             voxel_list = [voxel_iters[f"subj{s:02d}_iter{train_i}"] for s in subj_list]
             # print(f"voxel_list {voxel_list}")
             image = image_iters[train_i].detach()
-            image = image.to(device)
-
+            caption = np.concatenate([caption_iters[f"subj{s:02d}_iter{train_i}"] for s in subj_list])
+            image = image[0:len(caption)].to(device)   # fix the last batch problem
             if use_image_aug: 
                 image = img_augment(image)
 
@@ -971,16 +1014,18 @@ for epoch in progress_bar:
                 select_list = [select_iters[f"subj{s:02d}_iter{train_i}"].detach().to(device) for s in subj_list]
                 select = torch.cat(select_list, dim=0)
 
-            voxel_ridge_list = [model.ridge(voxel_list[si].detach().to(device),si) for si,s in enumerate(subj_list)]
+            voxel_ridge_list = [model.ridge(voxel_list[si].detach().to(device), si) for si, s in enumerate(subj_list)]
             # for i in range(len(voxel_list)):
             # del voxel_list
             voxel_ridge = torch.cat(voxel_ridge_list, dim=0)
 
-            backbone, clip_voxels, blurry_image_enc_ = model.backbone(voxel_ridge)
-
+            backbone, backbone_txt, clip_voxels, blurry_image_enc_ = model.backbone(voxel_ridge)
             if clip_scale>0:
                 clip_voxels_norm = nn.functional.normalize(clip_voxels.flatten(1), dim=-1)
                 clip_target_norm = nn.functional.normalize(clip_target.flatten(1), dim=-1)
+                # clip_voxels_txt_norm = nn.functional.normalize(clip_voxels_txt.flatten(1), dim=-1)
+                if dual_guidance:
+                    clip_target_txt_norm = nn.functional.normalize(clip_target_txt.flatten(1), dim=-1)
 
             if use_prior:
                 loss_prior, prior_out = model.diffusion_prior(text_embed=backbone, image_embed=clip_target)
@@ -988,7 +1033,16 @@ for epoch in progress_bar:
                 loss_prior *= prior_scale
                 # print(f"loss prior {loss_prior.item()}")
                 loss += loss_prior
-
+                # for txt
+                if dual_guidance:
+                    loss_prior_txt, prior_out_txt = model.diffusion_prior_txt(text_embed=backbone_txt, image_embed=clip_target_txt)
+                    loss_prior_total_txt += loss_prior_txt.item()
+                    loss_prior_txt *= prior_scale
+                
+                # print(f"loss prior {loss_prior.item()}")
+                    loss += loss_prior_txt
+                    recon_cossim_txt += nn.functional.cosine_similarity(prior_out_txt, clip_target_txt).mean().item()
+                
                 recon_cossim += nn.functional.cosine_similarity(prior_out, clip_target).mean().item()
                 recon_mse += mse(prior_out, clip_target).item()
 
@@ -999,13 +1053,13 @@ for epoch in progress_bar:
                         clip_target_norm,
                         temp=.006,
                         perm=perm, betas=betas, select=select)
+
                 else:
                     epoch_temp = soft_loss_temps[epoch-int(mixup_pct*num_epochs)]
                     loss_clip = utils.soft_clip_loss(
                         clip_voxels_norm,
                         clip_target_norm,
                         temp=epoch_temp)
-                # print(f"loss_clip {loss_clip.item()}")
                 loss_clip_total += loss_clip.item()
                 loss_clip *= clip_scale
                 
@@ -1066,6 +1120,7 @@ for epoch in progress_bar:
     model.eval()
     if local_rank==0:
         with torch.no_grad(), torch.cuda.amp.autocast(dtype=data_type): 
+            caption = []
             for test_i, data in enumerate(test_dl):  
                 if subj < 9:
                     behav, past_behav, future_behav, old_behav = data
@@ -1111,16 +1166,27 @@ for epoch in progress_bar:
                             assert len(locs)==3
                             if test_image is None:
                                 test_image = torch.tensor(images[im][None], dtype=torch.float16, device="cpu")
+                                if dual_guidance:
+                                    test_caption.append(captions[im])
                                 test_voxel = voxel[locs][None]
                             else:
                                 test_image = torch.vstack((test_image, torch.tensor(images[im][None], dtype=torch.float16, device="cpu")))
+                                if dual_guidance:
+                                    test_caption.append(captions[im])
                                 test_voxel = torch.vstack((test_voxel, voxel[locs][None]))
 
                     loss=0.
                                 
                     test_indices = torch.arange(len(test_voxel))[:300]
+                    # print(test_image.shape,len(test_caption),test_indices.max())
                     voxel = test_voxel[test_indices].to(device)
                     image = test_image[test_indices].to(device)
+                    if dual_guidance:
+                        for idx in test_indices:
+                            # if isinstance(idx, torch.Tensor):
+                            #     idx = idx.item()
+                            caption.append(test_caption[idx])
+                        assert len(caption) == 300
                     assert len(image) == 300
                 else:
                     voxel, image = data
@@ -1131,35 +1197,54 @@ for epoch in progress_bar:
 
                 for rep in range(voxel.shape[1]):
                     voxel_ridge = model.ridge(voxel[:,rep],0) # 0th index of subj_list
-                    backbone0, clip_voxels0, blurry_image_enc_ = model.backbone(voxel_ridge)
+                    backbone0, backbone_txt0, clip_voxels0, blurry_image_enc_ = model.backbone(voxel_ridge)
                     if rep==0:
                         clip_voxels = clip_voxels0
                         backbone = backbone0
+                        backbone_txt = backbone_txt0
                     else:
                         clip_voxels += clip_voxels0
                         backbone += backbone0
+                        backbone_txt += backbone_txt0
                 clip_voxels /= voxel.shape[1]
                 backbone /= voxel.shape[1]
+                backbone_txt /= voxel.shape[1]
 
                 if clip_scale>0:
                     clip_voxels_norm = nn.functional.normalize(clip_voxels.flatten(1), dim=-1)
                     clip_target_norm = nn.functional.normalize(clip_target.flatten(1), dim=-1)
+                    # clip_voxels_txt_norm = nn.functional.normalize(clip_voxels_txt.flatten(1), dim=-1)
+                    if dual_guidance:
+                        clip_target_txt_norm = nn.functional.normalize(clip_target_txt.flatten(1), dim=-1)
                 
                 # for some evals, only doing a subset of the samples per batch because of computational cost
                 random_samps = np.random.choice(np.arange(len(image)), size=len(image)//5, replace=False)
                 
                 if use_prior:
+                    # image part
                     loss_prior, contaminated_prior_out = model.diffusion_prior(text_embed=backbone[random_samps], image_embed=clip_target[random_samps])
                     test_loss_prior_total += loss_prior.item()
                     loss_prior *= prior_scale
                     loss += loss_prior
+                    if dual_guidance:
+                        # txt part
+                        loss_prior_txt, contaminated_prior_out_txt = model.diffusion_prior_txt(text_embed=backbone_txt[random_samps], image_embed=clip_target_txt[random_samps])
+                        test_loss_prior_total_txt += loss_prior_txt.item()
+                        loss_prior_txt *= prior_scale
+                        loss += loss_prior_txt
                     
                     if visualize_prior:
                         # now get unCLIP prediction without feeding it the image embed to get uncontaminated reconstruction
                         prior_out = model.diffusion_prior.p_sample_loop(backbone[random_samps].shape, 
                                         text_cond = dict(text_embed = backbone[random_samps]), 
                                         cond_scale = 1., timesteps = 20)
-
+                        if dual_guidance:
+                            prior_out_txt = model.diffusion_prior_txt.p_sample_loop(backbone_txt[random_samps].shape, 
+                                            text_cond = dict(text_embed = backbone_txt[random_samps]), 
+                                            cond_scale = 1., timesteps = 20)
+                            
+                            test_recon_cossim_txt += nn.functional.cosine_similarity(prior_out_txt, clip_target_txt[random_samps]).mean().item()
+                        
                         test_recon_cossim += nn.functional.cosine_similarity(prior_out, clip_target[random_samps]).mean().item()
                         test_recon_mse += mse(prior_out, clip_target[random_samps]).item()
                         
@@ -1168,7 +1253,6 @@ for epoch in progress_bar:
                         clip_voxels_norm,
                         clip_target_norm,
                         temp=.006)
-
                     test_loss_clip_total += loss_clip.item()
                     loss_clip = loss_clip * clip_scale
                     loss += loss_clip
@@ -1208,11 +1292,15 @@ for epoch in progress_bar:
                 "train/blurry_pixcorr": blurry_pixcorr / (train_i + 1),
                 "test/blurry_pixcorr": test_blurry_pixcorr / (test_i + 1),
                 "train/recon_cossim": recon_cossim / (train_i + 1),
+                "train/recon_txt_cossim": recon_cossim_txt / (train_i +1),
                 "test/recon_cossim": test_recon_cossim / (test_i + 1),
+                "test/recon_txt_cossim": test_recon_cossim_txt / (test_i +1),
                 "train/recon_mse": recon_mse / (train_i + 1),
                 "test/recon_mse": test_recon_mse / (test_i + 1),
                 "train/loss_prior": loss_prior_total / (train_i + 1),
                 "test/loss_prior": test_loss_prior_total / (test_i + 1),
+                "train/loss_prior_txt": loss_prior_total_txt / (train_i + 1),
+                "test/loss_prior_txt": test_loss_prior_total_txt / (test_i + 1),
                 }
 
             # if finished training, save jpg recons if they exist
@@ -1279,8 +1367,20 @@ if ckpt_saving:
 # In[ ]:
 
 
-plt.plot(losses)
-plt.show()
-plt.plot(test_losses)
-plt.show()
+# plt.plot(losses)
+# plt.show()
+# plt.plot(test_losses)
+# plt.show()
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
 

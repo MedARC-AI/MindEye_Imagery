@@ -20,6 +20,7 @@ import json
 from PIL import Image
 import requests
 import time 
+import h5py
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -999,6 +1000,19 @@ def create_whole_region_imagery_unnormalized(subject = 1, mask=True, GLMdenoise=
     torch.save(whole_region, file)
     return whole_region
 
+def convert_from_pt_to_hdf5(load_data_path="../dataset/", save_data_path="../dataset/"):
+    
+    # Load the tensor
+    tensor = torch.load(load_data_path).requires_grad_(False).to("cpu")
+    
+    # Convert the tensor to a numpy array (h5py works with numpy arrays)
+    tensor_numpy = tensor.numpy()
+    
+    # Save the tensor to the specified HDF5 format
+    with h5py.File(save_data_path, 'w') as hdf:
+        hdf.create_dataset('betas', data=tensor_numpy)
+    
+    
 def create_whole_region_imagery_normalized(subject = 1, mask=True, GLMdenoise=True, data_path="../dataset/"):
     img_stim_file = f"{data_path}/nsddata_stimuli/stimuli/nsd/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -1051,30 +1065,37 @@ def calculate_snr(betas):
     snr = torch.nan_to_num(snr)
     return snr, signal, noise
 
-def create_snr_betas(subject, threshold = -1.0, data_path="../dataset/"):
+def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/", threshold=-1.0):
     
     create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
     create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
     
     if threshold != -1.0:
-        beta_file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_include_heldout.pt"
-        x = torch.load(beta_file).requires_grad_(False).to("cpu")
-        snr_mask = calculate_snr_mask(subject, threshold, betas=x, data_path=data_path)
+        # Load the tensor from the HDF5 file
+        with h5py.File(f'{data_path}/betas_all_whole_brain_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+    
+        snr_mask = calculate_snr_mask(subject, threshold, betas=betas, data_path=data_path)
+        
         # Filter out the zero columns
-        betas = x[:, snr_mask]
+        betas = betas[:, snr_mask]
         
     else:      
-        f = h5py.File(f'{data_path}/betas_all_subj{s:02d}_fp32_renorm.hdf5', 'r')
-        betas = f['betas'][:]
+        with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
         
-    return betas
+    return betas.to(data_type)
 
 def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
+    
     if betas is None:
         beta_file = f"{data_path}/preprocessed_data/subject{subject}/whole_brain_include_heldout.pt"
         x = torch.load(beta_file).requires_grad_(False).to("cpu")
     else:
         x = betas
+        
     # Load stimulus descriptions
     stim_descriptions = pd.read_csv(f"{data_path}/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0)
 
