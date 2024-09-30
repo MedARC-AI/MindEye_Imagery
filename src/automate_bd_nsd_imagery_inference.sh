@@ -1,27 +1,18 @@
 jupyter nbconvert recon_inference_mi.ipynb --to python
+jupyter nbconvert recon_inference_mi_avg.ipynb --to python
 jupyter nbconvert final_evaluations_mi.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 jupyter nbconvert Train.ipynb --to python
-export CUDA_VISIBLE_DEVICES="3"
+export CUDA_VISIBLE_DEVICES="0"
 
-for subj in 1; do
-    model_name="pretrained_subj01_40sess_hypatia_vd_snr_0_5" 
+subj=1
+for model_name in "braindiffuser_subj01" ; do
     for mode in "vision" "imagery"; do # "vision" "imagery"; do
 
-        python recon_inference_mi.py \
-            --model_name $model_name \
-            --subj $subj \
-            --mode $mode \
-            --cache_dir ../cache \
-            --data_path ../dataset \
-            --hidden_dim 1024 \
-            --n_blocks 4 \
-            --snr 0.5
-
         python final_evaluations_mi_multi.py \
-            --model_name $model_name \
+            --model_name "${model_name}" \
             --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
             --subj $subj \
             --mode $mode \
@@ -39,11 +30,11 @@ for subj in 1; do
                 --subjs=$subj
     done
 
+python plots_across_methods.py \
+--methods "mindeye1_subj01,final_subj01_pretrained_40sess_24bs,pretrained_subj01_40sess_hypatia_ip_adapter_plus,pretrained_subj01_40sess_hypatia_ip_adapter2,pretrained_subj01_40sess_hypatia_vd2,pretrained_subj01_40sess_hypatia_vd_dual_proj,pretrained_subj01_40sess_hypatia_vd_snr_0_5,pretrained_subj01_40sess_hypatia_vd_snr_0_55,pretrained_subj01_40sess_hypatia_vd_snr_0_65,pretrained_subj01_40sess_hypatia_vd_snr_0_75,pretrained_subj01_40sess_hypatia_vd_multisubject_snr_0_5,prior_257_final_subj01_bimixco_softclip_byol_img2img0.85_16,braindiffuser_subj01" \
+--data_path ../dataset \
+--output_path ../figs/
 
-    python plots_across_methods.py \
-        --methods "mindeye1_subj01,final_subj01_pretrained_40sess_24bs,pretrained_subj01_40sess_hypatia_vd2,pretrained_subj01_40sess_hypatia_vd_dual_proj,pretrained_subj01_40sess_hypatia_vd_snr_0_5,pretrained_subj01_40sess_hypatia_vd_snr_0_55" \
-        --data_path ../dataset \
-        --output_path ../figs/
 
 done
 
