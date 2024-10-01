@@ -1480,15 +1480,34 @@ class ClipperLarge(nn.Module):
         text_features = F.normalize(text_features, dim=-1).detach()
         return text_features
     
-    def encode_image(self, image):
+    def embed_image(self, image, last_hidden_layer=False):
         dtype = next(self.image_encoder.parameters()).dtype
-        num_images_per_prompt = 1
-        if not isinstance(image, torch.Tensor):
-            image = self.preprocess(image, return_tensors="pt").pixel_values # [1, 3, 224, 224]
-            print("image", image.shape)
+        # if not isinstance(image, torch.Tensor):
+        image = self.preprocess(image, return_tensors="pt").pixel_values # [1, 3, 224, 224]
         image = image.to(device=self.device, dtype=dtype)
-        image_embeds = self.image_encoder(image).image_embeds # (1, 1024)
-        image_embeds = image_embeds.repeat_interleave(num_images_per_prompt, dim=0) # (num_images_per_prompt, 1024)
+        image_embeds = self.image_encoder(image)
+        if last_hidden_layer:
+            image_embeds = image_embeds.last_hidden_state
+        else:
+            image_embeds = image_embeds.image_embeds # (1, 1024)
 
         return image_embeds
     
+    def process_image(self, image):
+        image = self.preprocess(image, return_tensors="pt").pixel_values
+        return image
+    
+    
+# from transformers import AutoProcessor, AutoModelForCausalLM
+# import requests
+# from PIL import Image
+
+# processor = AutoProcessor.from_pretrained("microsoft/git-large-coco")
+# model = AutoModelForCausalLM.from_pretrained("microsoft/git-large-coco")
+# image = Image.open("IP-Adapter/assets/images/statue.png")
+# pixel_values = processor(images=image, return_tensors="pt").pixel_values
+# print(pixel_values.shape)
+# generated_ids = model.generate(pixel_values=pixel_values, max_length=100)
+# print(generated_ids.shape)
+# generated_caption = processor.batch_decode(generated_ids, skip_special_tokens=True)
+# print(generated_caption)

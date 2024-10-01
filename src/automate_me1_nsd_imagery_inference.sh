@@ -8,7 +8,7 @@ jupyter nbconvert Train.ipynb --to python
 export CUDA_VISIBLE_DEVICES="3"
 
 subj=1
-for model_name in "mindeye1_subj01_hypatia_default" "mindeye1_prior_257_final_subj01_bimixco_softclip_byol" ; do
+for model_name in "mindeye1_subj01_hypatia_default2" "mindeye1_subj01_hypatia_dual_proj2" ; do
     for mode in "vision" "imagery"; do # "vision" "imagery"; do
 
         python final_evaluations_mi_multi.py \
@@ -36,10 +36,12 @@ python plots_across_methods.py \
 final_subj01_pretrained_40sess_24bs, \
 pretrained_subj01_40sess_hypatia_vd2, \
 pretrained_subj01_40sess_hypatia_vd_dual_proj, \
+mindeye1_subj01_hypatia_dual_proj2, \
 prior_257_final_subj01_bimixco_softclip_byol_img2img0.85_16, \
 braindiffuser_subj01, \
 pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
 mindeye1_subj01_hypatia_default, \
+mindeye1_subj01_hypatia_default2, \
 mindeye1_prior_257_final_subj01_bimixco_softclip_byol" \
 --data_path ../dataset \
 --output_path ../figs/ \
