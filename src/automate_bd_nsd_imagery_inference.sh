@@ -1,14 +1,10 @@
-jupyter nbconvert recon_inference_mi.ipynb --to python
-jupyter nbconvert recon_inference_mi_avg.ipynb --to python
-jupyter nbconvert final_evaluations_mi.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
-jupyter nbconvert Train.ipynb --to python
 export CUDA_VISIBLE_DEVICES="0"
 
 subj=1
-for model_name in "braindiffuser_subj01" ; do
+for model_name in "braindiffuser_subj01_0.0_mix" "braindiffuser_subj01_0.4_mix" "braindiffuser_subj01_1.0_mix" ; do
     for mode in "vision" "imagery"; do # "vision" "imagery"; do
 
         python final_evaluations_mi_multi.py \
@@ -31,9 +27,15 @@ for model_name in "braindiffuser_subj01" ; do
     done
 
 python plots_across_methods.py \
---methods "mindeye1_subj01,final_subj01_pretrained_40sess_24bs,pretrained_subj01_40sess_hypatia_ip_adapter_plus,pretrained_subj01_40sess_hypatia_ip_adapter2,pretrained_subj01_40sess_hypatia_vd2,pretrained_subj01_40sess_hypatia_vd_dual_proj,pretrained_subj01_40sess_hypatia_vd_snr_0_5,pretrained_subj01_40sess_hypatia_vd_snr_0_55,pretrained_subj01_40sess_hypatia_vd_snr_0_65,pretrained_subj01_40sess_hypatia_vd_snr_0_75,pretrained_subj01_40sess_hypatia_vd_multisubject_snr_0_5,prior_257_final_subj01_bimixco_softclip_byol_img2img0.85_16,braindiffuser_subj01" \
+--methods "mindeye1_subj01, \
+braindiffuser_subj01, \
+final_subj01_pretrained_40sess_24bs, \
+braindiffuser_subj01_0.0_mix, \
+braindiffuser_subj01_0.4_mix, \
+braindiffuser_subj01_1.0_mix" \
 --data_path ../dataset \
---output_path ../figs/
+--output_path ../figs/ \
+--output_file methods_braindiffuser_mix.png
 
 
 done
