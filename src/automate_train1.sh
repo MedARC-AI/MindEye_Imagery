@@ -11,7 +11,7 @@ pretrain_model_name="multisubject_subj0${subj}_hypatia_vd_dual_proj"
 
 # export BATCH_SIZE=84
 # singlesubject finetuning
-for wd in 60000 1 100 10000; do
+for wd in 1 10 1000 10000; do
 
     model_name="pretrained_subj0${subj}_40sess_hypatia_vd_dual_proj_wd_${wd}"
     echo model_name=${model_name}
