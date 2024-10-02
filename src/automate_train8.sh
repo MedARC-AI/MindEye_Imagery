@@ -34,6 +34,60 @@ for mode in "vision" "imagery"; do
         --data_path ../dataset \
         --flat \
         --save_raw \
+        --dual_guidance 
+
+    python final_evaluations_mi_multi.py \
+            --model_name $model_name \
+            --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
+            --subj $subj \
+            --mode $mode \
+            --data_path ../dataset \
+            --cache_dir ../cache
+            # --no-blurry_recon
+
+    python plots_across_subjects.py \
+            --model_name="${model_name}" \
+            --mode="${mode}" \
+            --data_path ../dataset \
+            --cache_dir ../cache \
+            --criteria all \
+            --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
+            --subjs=$subj
+
+    done
+
+
+# python plots_across_methods.py \
+# --methods "mindeye1_subj01, \
+# braindiffuser_subj01, \
+# final_subj01_pretrained_40sess_24bs, \
+# pretrained_subj01_40sess_hypatia_vd2, \
+# pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
+# subj01_40sess_hypatia_turbo_ridge_flat" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_scatter_reduced.png
+
+model_name="subj0${subj}_40sess_hypatia_turbo_ridge_seq"
+echo model_name=${model_name}
+# python Train_ridge.py \
+#     --data_path=../dataset \
+#     --cache_dir=../cache \
+#     --model_name=${model_name} \
+#     --no-multi_subject \
+#     --subj=${subj} \
+#     --batch_size=${BATCH_SIZE} \
+#     --weight_decay=60000 \
+#     --dual_guidance
+
+for mode in "vision" "imagery"; do
+    python recon_inference_mi_ridge.py \
+        --model_name $model_name \
+        --subj $subj \
+        --mode $mode \
+        --cache_dir ../cache \
+        --data_path ../dataset \
+        --save_raw \
         --dual_guidance \
         --normalize_preds
 
@@ -64,60 +118,9 @@ braindiffuser_subj01, \
 final_subj01_pretrained_40sess_24bs, \
 pretrained_subj01_40sess_hypatia_vd2, \
 pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-subj01_40sess_hypatia_turbo_ridge_flat" \
+subj01_40sess_hypatia_turbo_ridge_flat_averaged,
+subj01_40sess_hypatia_turbo_ridge_flat,
+subj01_40sess_hypatia_turbo_ridge_seq" \
 --data_path ../dataset \
 --output_path ../figs/ \
 --output_file methods_scatter_reduced.png
-
-# model_name="subj0${subj}_40sess_hypatia_turbo_ridge_seq"
-# echo model_name=${model_name}
-# python Train_ridge.py \
-#     --data_path=../dataset \
-#     --cache_dir=../cache \
-#     --model_name=${model_name} \
-#     --no-multi_subject \
-#     --subj=${subj} \
-#     --batch_size=${BATCH_SIZE} \
-#     --weight_decay=60000 \
-#     --dual_guidance
-
-# for mode in "vision" "imagery"; do
-#     python recon_inference_mi_ridge.py \
-#         --model_name $model_name \
-#         --subj $subj \
-#         --mode $mode \
-#         --cache_dir ../cache \
-#         --data_path ../dataset \
-#         --alpha $alpha
-
-#     python final_evaluations_mi_multi.py \
-#             --model_name $model_name \
-#             --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
-#             --subj $subj \
-#             --mode $mode \
-#             --data_path ../dataset \
-#             --cache_dir ../cache
-#             # --no-blurry_recon
-
-#     python plots_across_subjects.py \
-#             --model_name="${model_name}" \
-#             --mode="${mode}" \
-#             --data_path ../dataset \
-#             --cache_dir ../cache \
-#             --criteria all \
-#             --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
-#             --subjs=$subj
-
-#     done
-
-
-# python plots_across_methods.py \
-# --methods "mindeye1_subj01, \
-# braindiffuser_subj01, \
-# final_subj01_pretrained_40sess_24bs, \
-# pretrained_subj01_40sess_hypatia_vd2, \
-# pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-# pretrained_subj01_40sess_hypatia_vd_dual_proj_wd_60000" \
-# --data_path ../dataset \
-# --output_path ../figs/ \
-# --output_file methods_scatter_reduced.png

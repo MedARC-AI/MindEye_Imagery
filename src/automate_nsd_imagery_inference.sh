@@ -4,10 +4,10 @@ jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 jupyter nbconvert Train.ipynb --to python
-export CUDA_VISIBLE_DEVICES="3"
+export CUDA_VISIBLE_DEVICES="0"
 
 for subj in 1; do
-    model_name="pretrained_subj01_40sess_hypatia_vd_snr_0_5" 
+    model_name="pretrained_subj01_40sess_hypatia_vd_dual_proj" 
     for mode in "vision" "imagery"; do # "vision" "imagery"; do
 
         python recon_inference_mi.py \
@@ -18,7 +18,7 @@ for subj in 1; do
             --data_path ../dataset \
             --hidden_dim 1024 \
             --n_blocks 4 \
-            --snr 0.5
+            --dual_guidance
 
         python final_evaluations_mi_multi.py \
             --model_name $model_name \
