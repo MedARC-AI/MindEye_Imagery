@@ -311,16 +311,16 @@ def prepare_low_level_latents(img_lowlevel,
     # 5b. Prepare latent variables
     normalize = transforms.Normalize(np.array([0.48145466, 0.4578275, 0.40821073]), np.array([0.26862954, 0.26130258, 0.27577711]))
     # use img_lowlevel for img2img initialization
-    img_lowlevel = torch.nn.functional.interpolate(img_lowlevel, size=(512, 512), mode='bilinear', align_corners=False)
+    img_lowlevel = transforms.Resize((512, 512))(img_lowlevel)
+    # img_lowlevel = normalize(img_lowlevel)
+    init_latents = vae.encode(img_lowlevel.to(device).to(vae.dtype)).latent_dist.sample(generator)
+    init_latents = vae.config.scaling_factor * init_latents
+    init_latents = init_latents.repeat(recons_per_sample, 1, 1, 1)
+    
     init_timestep = min(int(num_inference_steps * img2img_strength), num_inference_steps)
     t_start = max(num_inference_steps - init_timestep, 0)
     timesteps = noise_scheduler.timesteps[t_start:]
     latent_timestep = timesteps[:1].repeat(recons_per_sample)
-    
-    img_lowlevel_embeddings = normalize(img_lowlevel)
-    init_latents = vae.encode(img_lowlevel_embeddings.to(device).to(vae.dtype)).latent_dist.sample(generator)
-    init_latents = vae.config.scaling_factor * init_latents
-    init_latents = init_latents.repeat(recons_per_sample, 1, 1, 1)
 
     noise = torch.randn([recons_per_sample, 4, 64, 64], device=device, 
                         generator=generator, dtype=init_latents.dtype)
@@ -433,7 +433,7 @@ def pick_best_recon(brain_recons, proj_embeddings, clip_extractor):
     v2c_reference_out = nn.functional.normalize(proj_embeddings.view(len(proj_embeddings),-1),dim=-1)
     sims=[]
     for im in range(len(brain_recons)): 
-        currecon = clip_extractor.embed_image(brain_recons[im]).to(proj_embeddings.device).to(proj_embeddings.dtype)
+        currecon = clip_extractor.embed_image(transforms.ToTensor()(brain_recons[im]).unsqueeze(0)).to(proj_embeddings.device).to(proj_embeddings.dtype)
         currecon = nn.functional.normalize(currecon.view(len(currecon),-1),dim=-1)
         cursim = batchwise_cosine_similarity(v2c_reference_out,currecon)
         sims.append(cursim.item())
