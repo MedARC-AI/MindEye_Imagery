@@ -1,7 +1,7 @@
 
 jupyter nbconvert Train_ridge.ipynb --to python
 jupyter nbconvert recon_inference_mi_ridge.ipynb --to python
-jupyter nbconvert recon_inference_mi_ridge_pipe.ipynb --to python
+jupyter nbconvert recon_inference_mi_ridge_bd_test.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
@@ -9,11 +9,11 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 export NUM_GPUS=1  # Set to equal gres=gpu:#!
 export BATCH_SIZE=50 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
 export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
-export CUDA_VISIBLE_DEVICES="0"
+export CUDA_VISIBLE_DEVICES="3"
 
 subj=1 
 
-model_name="subj0${subj}_40sess_hypatia_turbo_ridge_flat_vd_clip"
+model_name="subj0${subj}_40sess_hypatia_turbo_ridge_flat"
 echo model_name=${model_name}
 # python Train_ridge.py \
 #     --data_path=../dataset \
@@ -28,7 +28,7 @@ echo model_name=${model_name}
 #     --vd_clip
 
 for mode in "vision" "imagery"; do
-    python recon_inference_mi_ridge.py \
+    python recon_inference_mi_ridge_bd_test.py \
         --model_name $model_name \
         --subj $subj \
         --mode $mode \
@@ -36,8 +36,7 @@ for mode in "vision" "imagery"; do
         --data_path ../dataset \
         --flat \
         --save_raw \
-        --dual_guidance \
-        --vd_clip
+        --dual_guidance
 
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
