@@ -28,7 +28,8 @@ echo model_name=${model_name}
 #     --vd_clip
 
 for mode in "vision" "imagery"; do
-    python recon_inference_mi_ridge_pipe.py \
+    model_name="subj0${subj}_40sess_hypatia_turbo_ridge_flat_vd_clip"
+    python recon_inference_mi_ridge.py \
         --model_name $model_name \
         --subj $subj \
         --mode $mode \
@@ -38,7 +39,7 @@ for mode in "vision" "imagery"; do
         --save_raw \
         --dual_guidance \
         --vd_clip
-
+    model_name="subj0${subj}_40sess_hypatia_turbo_ridge_flat_vd_clip_new_vd"
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
             --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
@@ -58,7 +59,7 @@ for mode in "vision" "imagery"; do
             --subjs=$subj
 
     done
-
+model_name="subj0${subj}_40sess_hypatia_turbo_ridge_flat_vd_clip"
 for mode in "vision" "imagery"; do
     python recon_inference_mi_ridge.py \
         --model_name $model_name \
@@ -68,8 +69,7 @@ for mode in "vision" "imagery"; do
         --data_path ../dataset \
         --flat \
         --save_raw \
-        --dual_guidance \
-        --vd_clip
+        --dual_guidance
 
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
@@ -97,9 +97,10 @@ braindiffuser_subj01, \
 final_subj01_pretrained_40sess_24bs, \
 pretrained_subj01_40sess_hypatia_vd2, \
 pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-subj01_40sess_hypatia_turbo_ridge_flat_normalized,
+subj01_40sess_hypatia_turbo_ridge_flat,
 subj01_40sess_hypatia_turbo_ridge_seq,
-subj01_40sess_hypatia_turbo_ridge_flat_vd_clip" \
+subj01_40sess_hypatia_turbo_ridge_flat_vd_clip, \
+subj01_40sess_hypatia_turbo_ridge_flat_vd_clip_new_vd" \
 --data_path ../dataset \
 --output_path ../figs/ \
 --output_file methods_scatter_reduced.png

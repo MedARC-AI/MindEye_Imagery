@@ -7,10 +7,24 @@ python plots_across_methods.py \
     pretrained_subj01_40sess_hypatia_vd2, \
     subj01_40sess_hypatia_turbo_ridge_flat, \
     pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-    pretrained_subj01_40sess_hypatia_vd_dual_proj_wd_1" \
+    pretrained_subj01_40sess_hypatia_vd_dual_proj_wd_1, \
+    subj01_40sess_hypatia_turbo_ridge_flat_vd_clip, \
+    subj01_40sess_hypatia_turbo_ridge_flat_vd_clip_new_vd"  \
     --data_path ../dataset \
     --output_path ../figs/ \
     --output_file methods_scatter_reduced
+
+#     python plots_across_methods.py \
+# --methods "mindeye1_subj01, \
+# braindiffuser_subj01, \
+# final_subj01_pretrained_40sess_24bs, \
+# pretrained_subj01_40sess_hypatia_vd2, \
+# pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
+# subj01_40sess_hypatia_turbo_ridge_flat,
+# subj01_40sess_hypatia_turbo_ridge_seq,
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_scatter_reduced.png
 
 
 
