@@ -5,11 +5,12 @@ python plots_across_methods.py \
 braindiffuser_subj01, \
 final_subj01_pretrained_40sess_24bs, \
 pretrained_subj01_40sess_hypatia_vd2, \
-pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-pretrained_subj01_40sess_hypatia_vd_dual_proj_wd_60000" \
+pretrained_subj01_40sess_hypatia_vd_dual_proj, \
+pretrained_subj01_40sess_hypatia_vd_dual_proj_wd_1, \
+pretrained_subj01_40sess_hypatia_vd_dual_proj_wd_0.1" \
 --data_path ../dataset \
 --output_path ../figs/ \
---output_file methods_scatter_reduced.png
+--output_file methods_scatter_wd.png
 
 
 # python plots_across_methods.py \
