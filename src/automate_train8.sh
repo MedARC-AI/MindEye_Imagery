@@ -1,7 +1,6 @@
 
-jupyter nbconvert Train_ridge.ipynb --to python
-jupyter nbconvert recon_inference_mi_ridge.ipynb --to python
-jupyter nbconvert recon_inference_mi_ridge_pipe.ipynb --to python
+jupyter nbconvert Train.ipynb --to python
+jupyter nbconvert recon_inference_mi.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
@@ -13,10 +12,10 @@ export CUDA_VISIBLE_DEVICES="0"
 
 subj=1 
 
-model_name="subj0${subj}_40sess_hypatia_turbo_ridge_flat2_deprecated"
+model_name="subj0${subj}_40sess_hypatia_turbo_ridge_flat3"
 echo model_name=${model_name}
 
-python Train_ridge.py \
+python Train.py \
     --data_path=../dataset \
     --cache_dir=../cache \
     --model_name=${model_name} \
@@ -24,20 +23,18 @@ python Train_ridge.py \
     --subj=${subj} \
     --batch_size=${BATCH_SIZE} \
     --weight_decay=60000 \
-    --dual_guidance \
-    --deprecated
+    --dual_guidance
 
 for mode in "vision" "imagery"; do
 
-    python recon_inference_mi_ridge.py \
+    python recon_inference_mi.py \
         --model_name $model_name \
         --subj $subj \
         --mode $mode \
         --cache_dir ../cache \
         --data_path ../dataset \
         --save_raw \
-        --dual_guidance \
-        --deprecated
+        --dual_guidance
 
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
@@ -69,7 +66,7 @@ subj01_40sess_hypatia_turbo_ridge_flat,
 subj01_40sess_hypatia_turbo_ridge_flat2,
 subj01_40sess_hypatia_turbo_ridge_flat_vd_clip, \
 subj01_40sess_hypatia_turbo_ridge_flat_vd_clip_new_vd,
-subj01_40sess_hypatia_turbo_ridge_flat2_deprecated" \
+subj01_40sess_hypatia_turbo_ridge_flat3" \
 --data_path ../dataset \
 --output_path ../figs/ \
 --output_file methods_scatter_deprecated_vd
