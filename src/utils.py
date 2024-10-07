@@ -1110,10 +1110,9 @@ def calculate_snr(betas):
 
 def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/", threshold=-1.0):
     
-    create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
-    create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
-    
     if threshold != -1.0:
+        create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
+        create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
         # Load the tensor from the HDF5 file
         with h5py.File(f'{data_path}/betas_all_whole_brain_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
             betas = f['betas'][:]
