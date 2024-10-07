@@ -10,7 +10,7 @@ export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
 export CUDA_VISIBLE_DEVICES="2"
 
 subj=1 
-pretrain_model_name="multisubject_subj0${subj}_hypatia_vd_dual_proj"
+pretrain_model_name="multisubject_subj0${subj}_hypatia_new_vd_dual_proj"
 echo model_name=${pretrain_model_name}
 python Train.py \
     --data_path=../dataset \
@@ -35,7 +35,7 @@ python Train.py \
 
 # singlesubject finetuning
 
-model_name="pretrained_subj0${subj}_40sess_hypatia_vd_dual_proj"
+model_name="pretrained_subj0${subj}_40sess_hypatia_new_vd_dual_proj"
 echo model_name=${model_name}
 python Train.py --data_path=../dataset \
     --cache_dir=../cache \
@@ -91,3 +91,14 @@ for mode in "imagery" "vision"; do
 
     done
 
+python plots_across_methods.py \
+--methods "mindeye1_subj01, \
+braindiffuser_subj01, \
+final_subj01_pretrained_40sess_24bs, \
+pretrained_subj01_40sess_hypatia_vd2, \
+pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
+subj01_40sess_hypatia_turbo_ridge_flat3,
+pretrained_subj01_40sess_hypatia_new_vd_dual_proj" \
+--data_path ../dataset \
+--output_path ../figs/ \
+--output_file methods_scatter_new_vd_main
