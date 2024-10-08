@@ -173,5 +173,5 @@ src/tables/
 dataset
 .gitignore
 cache
-src/depth_anything
-src/IP-Adapter
+figs
+
