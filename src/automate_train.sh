@@ -31,7 +31,8 @@ python Train.py \
     --num_sessions=40 \
     --ckpt_interval=999 \
     --ckpt_saving \
-    --wandb_log
+    --wandb_log \
+    --dual_guidance
 
 # singlesubject finetuning
 
