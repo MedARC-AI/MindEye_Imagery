@@ -301,6 +301,32 @@ def unclip_recon(x, diffusion_engine, vector_suffix,
         # samples = torch.clamp((samples_x + .5) / 2.0, min=0.0, max=1.0)
         return samples
     
+def prepare_low_level_latents(img_lowlevel, 
+                              img2img_strength,
+                              vae, 
+                              noise_scheduler, 
+                              generator,
+                              num_inference_steps,
+                              recons_per_sample=16):
+    # 5b. Prepare latent variables
+    normalize = transforms.Normalize(np.array([0.48145466, 0.4578275, 0.40821073]), np.array([0.26862954, 0.26130258, 0.27577711]))
+    # use img_lowlevel for img2img initialization
+    img_lowlevel = transforms.Resize((512, 512))(img_lowlevel)
+    # img_lowlevel = normalize(img_lowlevel)
+    init_latents = vae.encode(img_lowlevel.to(device).to(vae.dtype)).latent_dist.sample(generator)
+    init_latents = vae.config.scaling_factor * init_latents
+    init_latents = init_latents.repeat(recons_per_sample, 1, 1, 1)
+    
+    init_timestep = min(int(num_inference_steps * img2img_strength), num_inference_steps)
+    t_start = max(num_inference_steps - init_timestep, 0)
+    timesteps = noise_scheduler.timesteps[t_start:]
+    latent_timestep = timesteps[:1].repeat(recons_per_sample)
+
+    noise = torch.randn([recons_per_sample, 4, 64, 64], device=device, 
+                        generator=generator, dtype=init_latents.dtype)
+    latents = noise_scheduler.add_noise(init_latents, noise, latent_timestep.int())
+    return latents
+    
 def versatile_diffusion_recon(brain_clip_embeddings, 
                               proj_embeddings, 
                               img_lowlevel, 
@@ -399,6 +425,22 @@ def versatile_diffusion_recon(brain_clip_embeddings,
     recon_img = brain_recons[:, best_picks[0]]
     
     return recon_img, brain_recons, best_picks
+
+def pick_best_recon(brain_recons, proj_embeddings, clip_extractor):
+    # pick best reconstruction out of several
+    best_picks = np.zeros(1).astype(np.int16)
+    v2c_reference_out = nn.functional.normalize(proj_embeddings.view(len(proj_embeddings),-1),dim=-1)
+    sims=[]
+    for im in range(len(brain_recons)): 
+        currecon = clip_extractor.embed_image(brain_recons[im]).to(proj_embeddings.device).to(proj_embeddings.dtype)
+        currecon = nn.functional.normalize(currecon.view(len(currecon),-1),dim=-1)
+        cursim = batchwise_cosine_similarity(v2c_reference_out,currecon)
+        sims.append(cursim.item())
+    best_picks[0] = int(np.nanargmax(sims))  
+     
+    recon_img = brain_recons[best_picks[0]]
+    
+    return recon_img
 
 def decode_latents(latents,vae):
     latents = 1 / 0.18215 * latents
@@ -1068,10 +1110,9 @@ def calculate_snr(betas):
 
 def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/", threshold=-1.0):
     
-    create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
-    create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
-    
     if threshold != -1.0:
+        create_whole_region_unnormalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
+        create_whole_region_normalized(subject = subject, include_heldout=True, mask_nsd_general=False, data_path=data_path)
         # Load the tensor from the HDF5 file
         with h5py.File(f'{data_path}/betas_all_whole_brain_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
             betas = f['betas'][:]
@@ -1088,6 +1129,102 @@ def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/"
             betas = torch.from_numpy(betas).to("cpu")
         
     return betas.to(data_type)
+
+def load_nsd(subject, betas=None, data_path="../dataset/"):
+    # Load betas if not provided
+    if betas is None:
+        with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+
+    # Load stimulus descriptions
+    stim_descriptions = pd.read_csv(
+        f"{data_path}/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0
+    )
+
+    # Define repeat columns
+    rep_columns = [f"subject{subject}_rep{j}" for j in range(3)]
+
+    # Filter training data (exclude shared1000 trials)
+    subj_train = stim_descriptions[
+        (stim_descriptions[f"subject{subject}"] != 0) & (stim_descriptions["shared1000"] == False)
+    ]
+
+    # Get the scan IDs for the three repeats in training data
+    scan_ids_train = subj_train[rep_columns].values - 1  # Convert to zero-based indices
+
+    # Flatten the scan IDs for training data
+    flat_scan_ids_train = scan_ids_train.flatten()
+
+    # Create an array of nsd IDs repeated for each repeat in training data
+    nsd_ids_train = subj_train["nsdId"].values
+    repeated_nsd_ids_train = np.repeat(nsd_ids_train, 3)
+
+    # Handle missing values and invalid indices in training data
+    valid_mask_train = (
+        (~np.isnan(flat_scan_ids_train))
+        & (flat_scan_ids_train >= 0)
+        & (flat_scan_ids_train < betas.shape[0])
+    )
+    valid_scan_ids_train = flat_scan_ids_train[valid_mask_train].astype(int)
+    valid_nsd_ids_train = repeated_nsd_ids_train[valid_mask_train].astype(int)
+
+    # Extract the corresponding brain activity data for training data
+    x_train = betas[valid_scan_ids_train]
+
+    # Filter test data (include shared1000 trials)
+    subj_test = stim_descriptions[
+        (stim_descriptions[f"subject{subject}"] != 0) & (stim_descriptions["shared1000"] == True)
+    ]
+
+    # Get the scan IDs for the three repeats in test data
+    scan_ids_test = subj_test[rep_columns].values - 1  # Convert to zero-based indices
+
+    # Handle missing values and invalid indices in test data
+    valid_mask_test = (
+        (~np.isnan(scan_ids_test))
+        & (scan_ids_test >= 0)
+        & (scan_ids_test < betas.shape[0])
+    )
+    scan_ids_test[~valid_mask_test] = -1  # Mark invalid indices with -1
+
+    # Prepare to extract betas for test data
+    num_test_trials, num_repeats = scan_ids_test.shape
+    betas_test = torch.zeros((num_test_trials, num_repeats, betas.shape[1]), dtype=betas.dtype)
+
+    # Extract betas for valid scan IDs
+    for i in range(num_test_trials):
+        for j in range(num_repeats):
+            scan_id = scan_ids_test[i, j]
+            if scan_id >= 0:
+                betas_test[i, j] = betas[int(scan_id)]
+
+    # Create a mask tensor for valid betas
+    valid_mask_test_tensor = torch.from_numpy(valid_mask_test.astype(np.float32))
+
+    # Sum over repeats
+    betas_test_sum = betas_test.sum(dim=1)  # Shape: (1000, voxels)
+
+    # Count valid repeats for each trial
+    valid_counts = valid_mask_test.sum(axis=1)  # Shape: (1000,)
+    valid_counts_tensor = torch.from_numpy(valid_counts).float().unsqueeze(1)
+
+    # Avoid division by zero
+    valid_counts_tensor[valid_counts_tensor == 0] = 1
+
+    # Compute the average over valid repeats
+    x_test = betas_test_sum / valid_counts_tensor
+
+    # Set x_test to zero where there are no valid repeats
+    zero_counts = (valid_counts == 0)
+    if zero_counts.any():
+        x_test[zero_counts] = 0
+
+    # Get nsd IDs for test data
+    test_nsd_ids = subj_test["nsdId"].values.astype(int)
+
+    return x_train, valid_nsd_ids_train, x_test, test_nsd_ids
+
 
 def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
     
