@@ -12,7 +12,7 @@ export CUDA_VISIBLE_DEVICES="1"
 
 subj=1 
 
-model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp_60"
+model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp_test"
 echo model_name=${model_name}
 
 for mode in "vision" "imagery"; do
