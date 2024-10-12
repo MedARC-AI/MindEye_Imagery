@@ -8,14 +8,14 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 export NUM_GPUS=1  # Set to equal gres=gpu:#!
 export BATCH_SIZE=50 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
 export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
-export CUDA_VISIBLE_DEVICES="3"
+export CUDA_VISIBLE_DEVICES="1"
 
 subj=1 
 
-model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp3"
+model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp4"
 echo model_name=${model_name}
 
-for mode in "vision" "imagery"; do
+for mode in "imagery"; do #"vision"
     python recon_inference_mi.py \
         --model_name $model_name \
         --subj $subj \
