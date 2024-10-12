@@ -3,6 +3,7 @@ import numpy as np
 from torchvision import transforms
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torch.nn import functional as F
 import PIL
 from PIL import Image
@@ -904,3 +905,267 @@ class GNet8_Encoder():
 
         return torch.from_numpy(gnet8j_image_pred[self.subject])
     
+
+
+
+from diffusers.schedulers import DDPMScheduler
+from diffusers.optimization import get_cosine_schedule_with_warmup
+from diffusers.models.embeddings import Timesteps, TimestepEmbedding
+from utils import retrieve_timesteps
+
+class DiffusionPriorUNet(nn.Module):
+    def __init__(
+        self, 
+        embed_dim=768,          # Updated from 1024 to 768
+        cond_dim=42,
+        hidden_dim=[768, 512, 256, 128, 64],
+        time_embed_dim=512,
+        act_fn=nn.SiLU,
+        dropout=0.0,
+    ):
+        super().__init__()
+        
+        self.embed_dim = embed_dim
+        self.cond_dim = cond_dim
+        self.hidden_dim = hidden_dim
+
+        # 1. Time Embedding
+        self.time_proj = Timesteps(time_embed_dim, True, 0)
+
+        # 3.1 Input Layer: Processes each token in the sequence
+        self.input_layer = nn.Sequential(
+            nn.Linear(embed_dim, hidden_dim[0]),
+            nn.LayerNorm(hidden_dim[0]),
+            act_fn(),
+        )
+
+        # 3.2 Hidden Encoder Layers
+        self.num_layers = len(hidden_dim)
+        self.encode_time_embedding = nn.ModuleList([
+            TimestepEmbedding(time_embed_dim, hidden_dim[i]) 
+            for i in range(self.num_layers - 1)
+        ])
+        self.encode_cond_embedding = nn.ModuleList([
+            nn.Linear(cond_dim, hidden_dim[i]) 
+            for i in range(self.num_layers - 1)
+        ])
+        self.encode_layers = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(hidden_dim[i], hidden_dim[i+1]),
+                nn.LayerNorm(hidden_dim[i+1]),
+                act_fn(),
+                nn.Dropout(dropout),
+            ) for i in range(self.num_layers - 1)
+        ])
+
+        # 3.3 Hidden Decoder Layers
+        self.decode_time_embedding = nn.ModuleList([
+            TimestepEmbedding(time_embed_dim, hidden_dim[i]) 
+            for i in reversed(range(1, self.num_layers))
+        ])
+        self.decode_cond_embedding = nn.ModuleList([
+            nn.Linear(cond_dim, hidden_dim[i]) 
+            for i in reversed(range(1, self.num_layers))
+        ])
+        self.decode_layers = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(hidden_dim[i], hidden_dim[i-1]),
+                nn.LayerNorm(hidden_dim[i-1]),
+                act_fn(),
+                nn.Dropout(dropout),
+            ) for i in reversed(range(1, self.num_layers))
+        ])
+
+        # 3.4 Output Layer: Maps back to embedding dimension
+        self.output_layer = nn.Linear(hidden_dim[0], embed_dim)
+        
+    def forward(self, x, t, c=None):
+        """
+        Args:
+            x: Tensor of shape (batch_size, seq_length, embed_dim)
+            t: Tensor of shape (batch_size,)
+            c: Tensor of shape (batch_size, cond_dim) or None
+        Returns:
+            Tensor of shape (batch_size, seq_length, embed_dim)
+        """
+        batch_size, seq_length, _ = x.shape
+
+        # 1. Time Embedding
+        t_emb = self.time_proj(t)  # (batch_size, time_embed_dim)
+        # Do NOT expand t_emb here; handle expansion within each layer
+
+        # 3.1 Input Layer
+        x = self.input_layer(x)  # (batch_size, seq_length, hidden_dim[0])
+
+        # 3.2 Hidden Encoder
+        hidden_activations = []
+        for i in range(self.num_layers - 1):
+            hidden_activations.append(x)
+            
+            # Get time embedding for current layer
+            t_layer_emb = self.encode_time_embedding[i](t_emb)  # (batch_size, hidden_dim[i])
+            t_layer_emb = t_layer_emb.unsqueeze(1).repeat(1, seq_length, 1)  # (batch_size, seq_length, hidden_dim[i])
+            
+            # Get conditional embedding for current layer, if provided
+            if c is not None:
+                c_layer_emb = self.encode_cond_embedding[i](c)  # (batch_size, hidden_dim[i])
+                c_layer_emb = c_layer_emb.unsqueeze(1).repeat(1, seq_length, 1)  # (batch_size, seq_length, hidden_dim[i])
+            else:
+                # Create a tensor of zeros with the same shape as t_layer_emb
+                c_layer_emb = torch.zeros_like(t_layer_emb, device=x.device)
+            
+            # Add time and conditional embeddings to x
+            x = x + t_layer_emb + c_layer_emb  # (batch_size, seq_length, hidden_dim[i])
+            
+            # Pass through encoder layer
+            x = self.encode_layers[i](x)  # (batch_size, seq_length, hidden_dim[i+1])
+        
+        # 3.3 Hidden Decoder
+        for i in range(self.num_layers - 1):
+            # Get decode time embedding for current layer
+            t_layer_emb = self.decode_time_embedding[i](t_emb)  # (batch_size, hidden_dim[i])
+            t_layer_emb = t_layer_emb.unsqueeze(1).repeat(1, seq_length, 1)  # (batch_size, seq_length, hidden_dim[i])
+            
+            # Get decode conditional embedding for current layer, if provided
+            if c is not None:
+                c_layer_emb = self.decode_cond_embedding[i](c)  # (batch_size, hidden_dim[i])
+                c_layer_emb = c_layer_emb.unsqueeze(1).repeat(1, seq_length, 1)  # (batch_size, seq_length, hidden_dim[i])
+            else:
+                # Create a tensor of zeros with the same shape as t_layer_emb
+                c_layer_emb = torch.zeros_like(t_layer_emb, device=x.device)
+            
+            # Add time and conditional embeddings to x
+            x = x + t_layer_emb + c_layer_emb  # (batch_size, seq_length, hidden_dim[i])
+            
+            # Pass through decoder layer
+            x = self.decode_layers[i](x)  # (batch_size, seq_length, hidden_dim[i-1])
+            
+            # Add skip connection from encoder
+            x = x + hidden_activations[-1 - i]  # (batch_size, seq_length, hidden_dim[i-1])
+        
+        # 3.4 Output Layer
+        x = self.output_layer(x)  # (batch_size, seq_length, embed_dim)
+
+        return x
+
+class DiffusionPrior:
+    def __init__(self, prior_unet=None, scheduler=None, device='cuda'):
+        self.prior_unet = prior_unet.to(device)
+        
+        if scheduler is None:
+            self.scheduler = DDPMScheduler() 
+        else:
+            self.scheduler = scheduler
+            
+        self.device = device
+        
+    def train(self, dataloader, num_epochs=10, learning_rate=1e-4, wandb_log=False):
+        self.prior_unet.train()
+        device = self.device
+        criterion = nn.MSELoss(reduction='mean')  # Changed to 'mean' for simplicity
+        # Add weight decay in the  future here
+        optimizer = optim.Adam(self.prior_unet.parameters(), lr=learning_rate)
+        
+        lr_scheduler = get_cosine_schedule_with_warmup(
+            optimizer=optimizer,
+            num_warmup_steps=500,
+            num_training_steps=(len(dataloader) * num_epochs),
+        )
+
+        num_train_timesteps = self.scheduler.config.num_train_timesteps
+        print(f'Number of training timesteps: {num_train_timesteps}')
+        for epoch in tqdm(range(num_epochs), desc="Training Epochs"):
+            loss_sum = 0
+            for batch in dataloader:
+                c_embeds = batch['clip_pred'].to(device).to(torch.float32)
+                h_embeds = batch['clip_target'].to(device).to(torch.float32)  # (batch_size, 257, 768)
+                N = h_embeds.shape[0]
+                print(f'Batch size: {N}')
+                # 1. Randomly replace c_embeds with None
+                if torch.rand(1).item() < 0.1:
+                    c_embeds = None
+
+                # 2. Generate noisy embeddings as input
+                noise = torch.randn_like(h_embeds)
+
+                # 3. Sample timestep
+                timesteps = torch.randint(0, num_train_timesteps, (N,), device=device)
+
+                # 4. Add noise to h_embedding
+                perturbed_h_embeds = self.scheduler.add_noise(
+                    h_embeds,
+                    noise,
+                    timesteps
+                ).to(torch.float32)  # (batch_size, 257, 768)
+
+                # 5. Predict noise
+                noise_pred = self.prior_unet(perturbed_h_embeds, timesteps.to(torch.float32), c_embeds)
+                
+                # 6. Compute loss
+                loss = criterion(noise_pred, noise)  # Scalar
+                
+                # 7. Backpropagation
+                optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.prior_unet.parameters(), 1.0)
+                optimizer.step()
+                lr_scheduler.step()
+
+                loss_sum += loss.item()
+                if wandb_log:
+                    wandb.log({'train/loss': loss.item()})
+
+            loss_epoch = loss_sum / len(dataloader)
+            tqdm.write(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss_epoch:.4f}')
+
+    def generate(
+        self, 
+        c_embeds=None, 
+        num_inference_steps=50, 
+        timesteps=None,
+        guidance_scale=5.0,
+        generator=None
+    ):
+        """
+        Args:
+            c_embeds: Tensor of shape (batch_size, cond_dim) or None
+            num_inference_steps: Number of diffusion steps
+            timesteps: Optional custom timesteps
+            guidance_scale: Scale for classifier-free guidance
+            generator: Torch generator for reproducibility
+        Returns:
+            Generated embeddings of shape (batch_size, 257, 768)
+        """
+        self.prior_unet.eval()
+        N = c_embeds.shape[0] if c_embeds is not None else 1
+
+        # 1. Prepare timesteps
+        timesteps, num_inference_steps = retrieve_timesteps(
+            self.scheduler, num_inference_steps, self.device, timesteps
+        )
+
+        # 2. Prepare c_embeds
+        if c_embeds is not None:
+            c_embeds = c_embeds.to(self.device)
+
+        # 3. Initialize noisy embeddings: (N, 257, 768)
+        h_t = torch.randn(N, 257, self.prior_unet.embed_dim, generator=generator, device=self.device)
+
+        # 4. Denoising loop
+        for step_index, t in enumerate(timesteps):
+            t_tensor = torch.full((N,), t, device=self.device, dtype=torch.long)  # (batch_size,)
+            
+            # 4.1 Predict noise
+            if guidance_scale == 0 or c_embeds is None:
+                noise_pred = self.prior_unet(h_t, t_tensor, c_embeds)
+            else:
+                # Predict noise with and without condition
+                noise_pred_cond = self.prior_unet(h_t, t_tensor, c_embeds)
+                noise_pred_uncond = self.prior_unet(h_t, t_tensor, None)
+                # Apply classifier-free guidance
+                noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_cond - noise_pred_uncond)
+
+            # 4.2 Compute previous noisy sample
+            h_t = self.scheduler.step(noise_pred, t, h_t, generator=generator).prev_sample
+        
+        return h_t

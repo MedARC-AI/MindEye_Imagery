@@ -12,7 +12,7 @@ export CUDA_VISIBLE_DEVICES="1"
 
 subj=1 
 
-model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp3"
+model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp_test"
 echo model_name=${model_name}
 
 for mode in "vision" "imagery"; do
@@ -24,8 +24,7 @@ for mode in "vision" "imagery"; do
         --data_path ../dataset \
         --use_prior \
         --save_raw \
-        --dual_guidance #\
-        # --no-normalize_preds
+        --dual_guidance 
 
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
@@ -54,7 +53,7 @@ final_subj01_pretrained_40sess_24bs, \
 pretrained_subj01_40sess_hypatia_vd2, \
 pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
 subj01_40sess_hypatia_turbo_ridge_flat3, \
-subj0${subj}_40sess_hypatia_ridge_flat_dp2" \
+subj0${subj}_40sess_hypatia_ridge_flat_dp_60" \
 --data_path ../dataset \
 --output_path ../figs/ \
 --output_file methods_scatter_reduced.png
