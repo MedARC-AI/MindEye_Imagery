@@ -12,7 +12,7 @@ export CUDA_VISIBLE_DEVICES="3"
 
 subj=1 
 
-model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp"
+model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp3"
 echo model_name=${model_name}
 
 python Train_dp.py \
