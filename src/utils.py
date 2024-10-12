@@ -607,7 +607,7 @@ def condition_average_old(x, y, cond, nest=False):
 #average: whether to average across trials, will produce x that is (stimuli, 1, voxels)
 #nest: whether to nest the data according to stimuli, will produce x that is (stimuli, trials, voxels)
 #data_root: path to where the dataset is saved.
-def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, data_root="../dataset/"):
+def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, whole_brain=False, data_root="../dataset/"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
     img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -634,15 +634,18 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                             np.logical_or(exps=='imgB_1', exps=='imgB_2')),
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
     # Load normalized betas
-    if snr == -1.0:
-        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
-    else:
-        if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
-            create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
-            create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
+    if whole_brain:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
-        snr_mask = calculate_snr_mask(subject, snr, data_path=data_root)
-        x = x[:,snr_mask]
+    else:
+        if snr == -1.0:
+            x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
+        else:
+            if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
+                create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
+                create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
+            x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
+            snr_mask = calculate_snr_mask(subject, snr, data_path=data_root)
+            x = x[:,snr_mask]
     # Find the trial indices conditioned on the type of trials we want to load
     cond_im_idx = {n: [image_map[c] for c in cues[idx]] for n,idx in cond_idx.items()}
     conditionals = cond_im_idx[mode+stimtype]

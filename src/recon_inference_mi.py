@@ -21,7 +21,6 @@ from tqdm import tqdm
 import webdataset as wds
 
 import matplotlib.pyplot as plt
-from PIL import Image
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -119,7 +118,13 @@ parser.add_argument(
     "--mode",type=str,default="vision",
 )
 parser.add_argument(
-    "--rep",type=int,default=1,
+    "--gen_rep",type=int,default=10,
+)
+parser.add_argument(
+    "--dual_guidance",action=argparse.BooleanOptionalAction,default=False,
+)
+parser.add_argument(
+    "--snr",type=float,default=-1,
 )
 if utils.is_interactive():
     args = parser.parse_args(jupyter_args)
@@ -131,7 +136,7 @@ for attribute_name in vars(args).keys():
     globals()[attribute_name] = getattr(args, attribute_name)
 
 
-if seed > 0 and rep == 1:
+if seed > 0 and gen_rep == 1:
     # seed all random functions, but only if doing 1 rep
     utils.seed_everything(seed)
 
@@ -149,11 +154,11 @@ if mode == "synthetic":
 elif subj > 8:
     _, _, voxels, all_images = utils.load_imageryrf(subject=subj-8, mode=mode, stimtype="object", average=False, nest=True, split=True)
 else:
-    voxels, all_images = utils.load_nsd_mental_imagery(subject=subj, mode=mode, stimtype="all", average=False, nest=True)
+    voxels, all_images = utils.load_nsd_mental_imagery(subject=subj, mode=mode, stimtype="all", snr=snr, average=False, nest=True)
 num_voxels = voxels.shape[-1]
 
 
-# In[5]:
+# In[ ]:
 
 
 clip_extractor = Clipper("ViT-L/14", hidden_state=True, norm_embs=True, device=device)
@@ -224,112 +229,10 @@ class RidgeRegression(torch.nn.Module):
 model.ridge = RidgeRegression([num_voxels], out_features=hidden_dim, seq_len=seq_len)
 
 from diffusers.models.vae import Decoder
-class BrainNetwork(nn.Module):
-    def __init__(self, h=4096, in_dim=15724, out_dim=768, seq_len=2, n_blocks=n_blocks, drop=.15, 
-                 clip_size=768):
-        super().__init__()
-        self.seq_len = seq_len
-        self.h = h
-        self.clip_size = clip_size
-        
-        self.mixer_blocks1 = nn.ModuleList([
-            self.mixer_block1(h, drop) for _ in range(n_blocks)
-        ])
-        self.mixer_blocks2 = nn.ModuleList([
-            self.mixer_block2(seq_len, drop) for _ in range(n_blocks)
-        ])
-        
-        # Output linear layer
-        self.backbone_linear = nn.Linear(h * seq_len, out_dim, bias=True) 
-        self.clip_proj = self.projector(clip_size, clip_size, h=clip_size)
-        
-        if blurry_recon:
-            self.blin1 = nn.Linear(h*seq_len,4*28*28,bias=True)
-            self.bdropout = nn.Dropout(.3)
-            self.bnorm = nn.GroupNorm(1, 64)
-            self.bupsampler = Decoder(
-                in_channels=64,
-                out_channels=4,
-                up_block_types=["UpDecoderBlock2D","UpDecoderBlock2D","UpDecoderBlock2D"],
-                block_out_channels=[32, 64, 128],
-                layers_per_block=1,
-            )
-            self.b_maps_projector = nn.Sequential(
-                nn.Conv2d(64, 512, 1, bias=False),
-                nn.GroupNorm(1,512),
-                nn.ReLU(True),
-                nn.Conv2d(512, 512, 1, bias=False),
-                nn.GroupNorm(1,512),
-                nn.ReLU(True),
-                nn.Conv2d(512, 512, 1, bias=True),
-            )
-            
-    def projector(self, in_dim, out_dim, h=2048):
-        return nn.Sequential(
-            nn.LayerNorm(in_dim),
-            nn.GELU(),
-            nn.Linear(in_dim, h),
-            nn.LayerNorm(h),
-            nn.GELU(),
-            nn.Linear(h, h),
-            nn.LayerNorm(h),
-            nn.GELU(),
-            nn.Linear(h, out_dim)
-        )
-    
-    def mlp(self, in_dim, out_dim, drop):
-        return nn.Sequential(
-            nn.Linear(in_dim, out_dim),
-            nn.GELU(),
-            nn.Dropout(drop),
-            nn.Linear(out_dim, out_dim),
-        )
-    
-    def mixer_block1(self, h, drop):
-        return nn.Sequential(
-            nn.LayerNorm(h),
-            self.mlp(h, h, drop),  # Token mixing
-        )
-
-    def mixer_block2(self, seq_len, drop):
-        return nn.Sequential(
-            nn.LayerNorm(seq_len),
-            self.mlp(seq_len, seq_len, drop)  # Channel mixing
-        )
-        
-    def forward(self, x):
-        # make empty tensors
-        c,b,t = torch.Tensor([0.]), torch.Tensor([[0.],[0.]]), torch.Tensor([0.])
-        
-        # Mixer blocks
-        residual1 = x
-        residual2 = x.permute(0,2,1)
-        for block1, block2 in zip(self.mixer_blocks1,self.mixer_blocks2):
-            x = block1(x) + residual1
-            residual1 = x
-            x = x.permute(0,2,1)
-            
-            x = block2(x) + residual2
-            residual2 = x
-            x = x.permute(0,2,1)
-            
-        x = x.reshape(x.size(0), -1)
-        backbone = self.backbone_linear(x).reshape(len(x), -1, self.clip_size)
-        c = self.clip_proj(backbone)
-
-        if blurry_recon:
-            b = self.blin1(x)
-            b = self.bdropout(b)
-            b = b.reshape(b.shape[0], -1, 7, 7).contiguous()
-            b = self.bnorm(b)
-            b_aux = self.b_maps_projector(b).flatten(2).permute(0,2,1)
-            b_aux = b_aux.view(len(b_aux), 49, 512)
-            b = (self.bupsampler(b), b_aux)
-        
-        return backbone, c, b
-
-model.backbone = BrainNetwork(h=hidden_dim, in_dim=hidden_dim, seq_len=seq_len, 
-                          clip_size=clip_emb_dim, out_dim=clip_emb_dim*clip_seq_dim) 
+from models import BrainNetwork
+model.backbone = BrainNetwork(h=hidden_dim, in_dim=hidden_dim, seq_len=seq_len, n_blocks=n_blocks,
+                          clip_size=clip_emb_dim, out_dim=clip_emb_dim*clip_seq_dim, 
+                          blurry_recon=blurry_recon, text_clip=dual_guidance) 
 utils.count_params(model.ridge)
 utils.count_params(model.backbone)
 utils.count_params(model)
@@ -350,7 +253,6 @@ prior_network = PriorNetwork(
         num_tokens = clip_seq_dim,
         learned_query_mode="pos_emb"
     )
-
 model.diffusion_prior = BrainDiffusionPrior(
     net=prior_network,
     image_embed_dim=out_dim,
@@ -359,9 +261,31 @@ model.diffusion_prior = BrainDiffusionPrior(
     cond_drop_prob=0.2,
     image_embed_scale=None,
 )
+if dual_guidance:
+    prior_network_txt = PriorNetwork_txt(
+            dim=out_dim,
+            depth=depth,
+            dim_head=dim_head,
+            heads=heads,
+            causal=False,
+            num_tokens = 77,
+            learned_query_mode="pos_emb"
+        )
+
+
+    model.diffusion_prior_txt = BrainDiffusionPrior(
+        net=prior_network_txt,
+        image_embed_dim=out_dim,
+        condition_on_text_encodings=False,
+        timesteps=timesteps,
+        cond_drop_prob=0.2,
+        image_embed_scale=None,
+    )
 model.to(device)
 
 utils.count_params(model.diffusion_prior)
+if dual_guidance:
+    utils.count_params(model.diffusion_prior_txt)
 utils.count_params(model)
 
 # Load pretrained model ckpt
@@ -396,37 +320,6 @@ except: # probably ckpt is saved using deepspeed format
 print("ckpt loaded!")
 
 
-# In[6]:
-
-
-# setup text caption networks
-from transformers import AutoProcessor, AutoModelForCausalLM
-from modeling_git import GitForCausalLMClipEmb
-processor = AutoProcessor.from_pretrained("microsoft/git-large-coco")
-clip_text_model = GitForCausalLMClipEmb.from_pretrained("microsoft/git-large-coco")
-clip_text_model.to(device) # if you get OOM running this script, you can switch this to cpu and lower minibatch_size to 4
-clip_text_model.eval().requires_grad_(False)
-clip_text_seq_dim = 257
-clip_text_emb_dim = 1024
-
-class CLIPConverter(torch.nn.Module):
-    def __init__(self):
-        super(CLIPConverter, self).__init__()
-        self.linear1 = nn.Linear(clip_seq_dim, clip_text_seq_dim)
-        self.linear2 = nn.Linear(clip_emb_dim, clip_text_emb_dim)
-    def forward(self, x):
-        x = x.permute(0,2,1)
-        x = self.linear1(x)
-        x = self.linear2(x.permute(0,2,1))
-        return x
-        
-# clip_convert = CLIPConverter()
-# state_dict = torch.load(f"{cache_dir}/bigG_to_L_epoch8.pth", map_location='cpu')['model_state_dict']
-# clip_convert.load_state_dict(state_dict, strict=True)
-# clip_convert.to(device) # if you get OOM running this script, you can switch this to cpu and lower minibatch_size to 4
-# del state_dict
-
-
 # In[7]:
 
 
@@ -452,7 +345,10 @@ vd_pipe.scheduler = UniPCMultistepScheduler.from_pretrained(cache_dir + "/models
 num_inference_steps = 20
 
 # Set weighting of Dual-Guidance 
-text_image_ratio = .0 # .5 means equally weight text and image, 0 means use only image
+if dual_guidance:
+    text_image_ratio = .4 # .5 means equally weight text and image, 0 means use only image
+else:
+    text_image_ratio = 0.
 for name, module in vd_pipe.image_unet.named_modules():
     if isinstance(module, DualTransformer2DModel):
         module.mix_ratio = text_image_ratio
@@ -472,41 +368,48 @@ noise_scheduler = vd_pipe.scheduler
 # In[8]:
 
 
-# get all reconstructions
-model.to(device)
-model.eval().requires_grad_(False)
+final_recons = None
+final_predcaptions = None
+final_clipvoxels = None
+final_blurryrecons = None
 
-all_blurryrecons = None
-all_recons = None
-all_predcaptions = []
-all_clipvoxels = None
-all_blurryrecons_reps = None
-all_recons_reps = None
-all_predcaptions_reps = []
-all_clipvoxels_reps = None
 
-minibatch_size = 1
-num_samples_per_image = 1
-plotting = False
+
 recons_per_sample = 16
-with torch.no_grad(), torch.cuda.amp.autocast(dtype=torch.float16):
-    for r in tqdm(range(rep), desc="rep loop"):
+
+for rep in tqdm(range(gen_rep)):
+    utils.seed_everything(seed = random.randint(0,10000000))
+    # get all reconstructions    
+    # all_images = None
+    all_blurryrecons = None
+    all_recons = None
+    all_predcaptions = []
+    all_clipvoxels = None
+    
+    minibatch_size = 1
+    num_samples_per_image = 1
+    plotting = False
+    
+    with torch.no_grad(), torch.cuda.amp.autocast(dtype=torch.float16):
         for idx in tqdm(range(0,voxels.shape[0]), desc="sample loop"):
             voxel = voxels[idx]
             voxel = voxel.to(device)
-            for rep in range(voxel.shape[0]):
-                voxel_ridge = model.ridge(voxel[None,None,rep],0) # 0th index of subj_list
-                backbone0, clip_voxels0, blurry_image_enc0 = model.backbone(voxel_ridge)
-                if rep==0:
+            for trial_rep in range(voxel.shape[0]):
+                voxel_ridge = model.ridge(voxel[None,None,trial_rep],0) # 0th index of subj_list
+                backbone0, backbone_txt0, clip_voxels0, blurry_image_enc0 = model.backbone(voxel_ridge)
+                if trial_rep==0:
                     clip_voxels = clip_voxels0
                     backbone = backbone0
+                    backbone_txt = backbone_txt0
                     blurry_image_enc = blurry_image_enc0[0]
                 else:
                     clip_voxels += clip_voxels0
                     backbone += backbone0
+                    backbone_txt += backbone_txt0
                     blurry_image_enc += blurry_image_enc0[0]
             clip_voxels /= voxel.shape[0]
             backbone /= voxel.shape[0]
+            backbone_txt /= backbone_txt.shape[0]
             blurry_image_enc /= voxel.shape[0]
                     
             # Save retrieval submodule outputs
@@ -520,7 +423,12 @@ with torch.no_grad(), torch.cuda.amp.autocast(dtype=torch.float16):
             prior_out = model.diffusion_prior.p_sample_loop(backbone.shape, 
                             text_cond = dict(text_embed = backbone), 
                             cond_scale = 1., timesteps = 20)
-            
+            prior_out_txt = None
+            if dual_guidance:
+                backbone_txt = backbone_txt.repeat(recons_per_sample, 1, 1)
+                prior_out_txt = model.diffusion_prior_txt.p_sample_loop(backbone_txt.shape, 
+                                text_cond = dict(text_embed = backbone_txt), 
+                                cond_scale = 1., timesteps = 20)
             # pred_caption_emb = clip_convert(prior_out)
             # generated_ids = clip_text_model.generate(pixel_values=pred_caption_emb, max_length=20)
             # generated_caption = processor.batch_decode(generated_ids, skip_special_tokens=True)
@@ -541,13 +449,12 @@ with torch.no_grad(), torch.cuda.amp.autocast(dtype=torch.float16):
                     plt.show()
             
             # Feed diffusion prior outputs through versatile diffusion
-            text_token = None
             generator = torch.Generator(device=device)
             samples, brain_recons, best_picks = utils.versatile_diffusion_recon(brain_clip_embeddings=prior_out, 
                                 proj_embeddings = clip_voxels, 
                                 img_lowlevel = blurred_image, 
                                 img2img_strength = .85, 
-                                text_token=text_token,
+                                text_token=prior_out_txt,
                                 clip_extractor = clip_extractor, 
                                 vae=vae, 
                                 unet=unet, 
@@ -570,90 +477,83 @@ with torch.no_grad(), torch.cuda.amp.autocast(dtype=torch.float16):
                 print(model_name)
                 err # dont actually want to run the whole thing with plotting=True
 
-    # resize outputs before saving
-    imsize = 256
-    print(all_recons.shape)
-    all_recons = transforms.Resize((imsize,imsize))(all_recons).float()
-    if blurry_recon: 
-        all_blurryrecons = transforms.Resize((imsize,imsize))(all_blurryrecons).float()
-
             
-    if all_recons_reps is None:
-        all_recons_reps = all_recons.cpu()
-        all_blurryrecons_reps = all_blurryrecons.cpu()
-        all_clipvoxels_reps = all_clipvoxels.cpu()
-    else:
-        all_recons_reps = torch.vstack((all_recons_reps, all_recons.cpu()))
-        all_blurryrecons_reps = torch.vstack((all_blurryrecons_reps, all_blurryrecons.cpu()))
-        all_clipvoxels_reps = torch.vstack((all_clipvoxels_reps, all_clipvoxels.cpu()))
+    
+        # resize outputs before saving
+        imsize = 256
+        # saving
+        # print(all_recons.shape)
+        # torch.save(all_images,"evals/all_images.pt")
+        if final_recons is None:
+            final_recons = all_recons.unsqueeze(1)
+            # final_predcaptions = np.expand_dims(all_predcaptions, axis=1)
+            final_clipvoxels = all_clipvoxels.unsqueeze(1)
+            if blurry_recon:
+                final_blurryrecons = all_blurryrecons.unsqueeze(1)
+        else:
+            final_recons = torch.cat((final_recons, all_recons.unsqueeze(1)), dim=1)
+            # final_predcaptions = np.concatenate((final_predcaptions, np.expand_dims(all_predcaptions, axis=1)), axis=1)
+            final_clipvoxels = torch.cat((final_clipvoxels, all_clipvoxels.unsqueeze(1)), dim=1)
+            if blurry_recon:
+                final_blurryrecons = torch.cat((all_blurryrecons.unsqueeze(1),final_blurryrecons), dim = 1)
         
-        
-# saving
-print(all_recons.shape)
-# torch.save(all_images,"evals/all_images.pt")
 if blurry_recon:
-    torch.save(all_blurryrecons,f"evals/{model_name}/{model_name}_all_blurryrecons_{mode}.pt")
-torch.save(all_recons,f"evals/{model_name}/{model_name}_all_recons_{mode}.pt")
-# torch.save(all_predcaptions,f"evals/{model_name}/{model_name}_all_predcaptions_{mode}.pt")
-torch.save(all_clipvoxels,f"evals/{model_name}/{model_name}_all_clipvoxels_{mode}.pt")
+    torch.save(final_blurryrecons,f"evals/{model_name}/{model_name}_all_blurryrecons_{mode}.pt")
+torch.save(final_recons,f"evals/{model_name}/{model_name}_all_recons_{mode}.pt")
+# torch.save(final_predcaptions,f"evals/{model_name}/{model_name}_all_predcaptions_{mode}.pt")
+torch.save(final_clipvoxels,f"evals/{model_name}/{model_name}_all_clipvoxels_{mode}.pt")
 print(f"saved {model_name} mi outputs!")
 
-print(all_recons_reps.shape)
-# torch.save(all_images,"evals/all_images.pt")
-if blurry_recon:
-    torch.save(all_blurryrecons_reps,f"evals/{model_name}/{model_name}_all_blurryrecons_{mode}_{rep}reps.pt")
-torch.save(all_recons_reps,f"evals/{model_name}/{model_name}_all_recons_{mode}_{rep}reps.pt")
-# torch.save(all_predcaptions,f"evals/{model_name}/{model_name}_all_predcaptions_{mode}.pt")
-torch.save(all_clipvoxels_reps,f"evals/{model_name}/{model_name}_all_clipvoxels_{mode}_{rep}reps.pt")
-print(f"saved {model_name} mi outputs {rep} reps!")
+# if not utils.is_interactive():
+#     sys.exit(0)
 
 
 # In[ ]:
 
 
-imsize = 150
-if all_images.shape[-1] != imsize:
-    all_images = transforms.Resize((imsize,imsize))(transforms.CenterCrop(all_images.shape[2])(all_images)).float()
-if all_recons.shape[-1] != imsize:
-    all_recons = transforms.Resize((imsize,imsize))(transforms.CenterCrop(all_images.shape[2])(all_recons)).float()
-print(all_images.shape, all_recons.shape)
-num_images = all_recons.shape[0]
-num_rows = (2 * num_images + 11) // 12
+# imsize = 150
+# if all_images.shape[-1] != imsize:
+#     all_images = transforms.Resize((imsize,imsize))(transforms.CenterCrop(all_images.shape[2])(all_images)).float()
+# if all_recons.shape[-1] != imsize:
+#     all_recons = transforms.Resize((imsize,imsize))(transforms.CenterCrop(all_images.shape[2])(all_recons)).float()
+# print(all_images.shape, all_recons.shape)
+# num_images = all_recons.shape[0]
+# num_rows = (2 * num_images + 11) // 12
 
-# Interleave tensors
-merged = torch.stack([val for pair in zip(all_images, all_recons) for val in pair], dim=0)
+# # Interleave tensors
+# merged = torch.stack([val for pair in zip(all_images, all_recons) for val in pair], dim=0)
 
-# Calculate grid size
-grid = torch.zeros((num_rows * 12, 3, all_recons.shape[-1], all_recons.shape[-1]))
+# # Calculate grid size
+# grid = torch.zeros((num_rows * 12, 3, all_recons.shape[-1], all_recons.shape[-1]))
 
-# Populate the grid
-grid[:2*num_images] = merged
-grid_images = [transforms.functional.to_pil_image(grid[i]) for i in range(num_rows * 12)]
+# # Populate the grid
+# grid[:2*num_images] = merged
+# grid_images = [transforms.functional.to_pil_image(grid[i]) for i in range(num_rows * 12)]
 
-# Create the grid image
-grid_image = Image.new('RGB', (all_recons.shape[-1] * 12, all_recons.shape[-1] * num_rows))  # 12 images wide
+# # Create the grid image
+# grid_image = Image.new('RGB', (all_recons.shape[-1] * 12, all_recons.shape[-1] * num_rows))  # 12 images wide
 
-# Paste images into the grid
-for i, img in enumerate(grid_images):
-    grid_image.paste(img, (all_recons.shape[-1] * (i % 12), all_recons.shape[-1] * (i // 12)))
+# # Paste images into the grid
+# for i, img in enumerate(grid_images):
+#     grid_image.paste(img, (all_recons.shape[-1] * (i % 12), all_recons.shape[-1] * (i // 12)))
 
-# Create title row image
-title_height = 150
-title_image = Image.new('RGB', (grid_image.width, title_height), color=(255, 255, 255))
-draw = ImageDraw.Draw(title_image)
-font = ImageFont.truetype("arial.ttf", 38)  # Change font size to 3 times bigger (15*3)
-title_text = f"Model: {model_name}, Mode: {mode}"
-bbox = draw.textbbox((0, 0), title_text, font=font)
-text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-draw.text(((grid_image.width - text_width) / 2, (title_height - text_height) / 2), title_text, fill="black", font=font)
+# # Create title row image
+# title_height = 150
+# title_image = Image.new('RGB', (grid_image.width, title_height), color=(255, 255, 255))
+# draw = ImageDraw.Draw(title_image)
+# font = ImageFont.truetype("arial.ttf", 38)  # Change font size to 3 times bigger (15*3)
+# title_text = f"Model: {model_name}, Mode: {mode}"
+# bbox = draw.textbbox((0, 0), title_text, font=font)
+# text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+# draw.text(((grid_image.width - text_width) / 2, (title_height - text_height) / 2), title_text, fill="black", font=font)
 
-# Combine title and grid images
-final_image = Image.new('RGB', (grid_image.width, grid_image.height + title_height))
-final_image.paste(title_image, (0, 0))
-final_image.paste(grid_image, (0, title_height))
+# # Combine title and grid images
+# final_image = Image.new('RGB', (grid_image.width, grid_image.height + title_height))
+# final_image.paste(title_image, (0, 0))
+# final_image.paste(grid_image, (0, title_height))
 
-final_image.save(f"../figs/{model_name}_{len(all_recons)}recons_{mode}.png")
-print(f"saved ../figs/{model_name}_{len(all_recons)}recons_{mode}.png")
+# final_image.save(f"../figs/{model_name}_{len(all_recons)}recons_{mode}.png")
+# print(f"saved ../figs/{model_name}_{len(all_recons)}recons_{mode}.png")
 
 
 # In[ ]:
