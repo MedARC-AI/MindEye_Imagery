@@ -8,7 +8,7 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 export NUM_GPUS=1  # Set to equal gres=gpu:#!
 export BATCH_SIZE=50 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
 export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
-export CUDA_VISIBLE_DEVICES="1"
+export CUDA_VISIBLE_DEVICES="3"
 
 subj=1 
 
