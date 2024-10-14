@@ -1,6 +1,6 @@
 
 jupyter nbconvert Train_ridge.ipynb --to python
-jupyter nbconvert recon_inference_mi.ipynb --to python
+jupyter nbconvert recon_inference_mi_ridge.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
@@ -8,24 +8,33 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 export NUM_GPUS=1  # Set to equal gres=gpu:#!
 export BATCH_SIZE=50 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
 export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
-export CUDA_VISIBLE_DEVICES="1"
+export CUDA_VISIBLE_DEVICES="0"
 
 subj=1 
 
-model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp5"
+model_name="subj0${subj}_40sess_hypatia_ridge_768"
 echo model_name=${model_name}
 
-for mode in "imagery"; do #"vision"
-    python recon_inference_mi.py \
+python Train_ridge.py \
+    --data_path=../dataset \
+    --cache_dir=../cache \
+    --model_name=${model_name} \
+    --no-multi_subject \
+    --subj=${subj} \
+    --batch_size=${BATCH_SIZE} \
+    --weight_decay=60000 \
+    --dual_guidance
+
+for mode in "vision" "imagery"; do
+
+    python recon_inference_mi_ridge.py \
         --model_name $model_name \
         --subj $subj \
         --mode $mode \
         --cache_dir ../cache \
         --data_path ../dataset \
-        --use_prior \
         --save_raw \
-        --dual_guidance #\
-        # --no-normalize_preds
+        --dual_guidance
 
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
@@ -47,16 +56,17 @@ for mode in "imagery"; do #"vision"
 
     done
 
-python plots_across_methods.py \
---methods "mindeye1_subj01, \
-braindiffuser_subj01, \
-final_subj01_pretrained_40sess_24bs, \
-pretrained_subj01_40sess_hypatia_vd2, \
-pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-subj01_40sess_hypatia_turbo_ridge_flat3, \
-subj01_40sess_hypatia_ridge_flat_dp3,
-subj01_40sess_hypatia_ridge_flat_dp4,
-subj01_40sess_hypatia_ridge_flat_dp5" \
---data_path ../dataset \
---output_path ../figs/ \
---output_file methods_scatter_dp_normalized_test.png
+# python plots_across_methods.py \
+# --methods "mindeye1_subj01, \
+# braindiffuser_subj01, \
+# final_subj01_pretrained_40sess_24bs, \
+# pretrained_subj01_40sess_hypatia_vd2, \
+# pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
+# subj01_40sess_hypatia_turbo_ridge_flat,
+# subj01_40sess_hypatia_turbo_ridge_flat2,
+# subj01_40sess_hypatia_turbo_ridge_flat_vd_clip, \
+# subj01_40sess_hypatia_turbo_ridge_flat_vd_clip_new_vd,
+# subj01_40sess_hypatia_turbo_ridge_flat3" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_scatter_deprecated_vd
