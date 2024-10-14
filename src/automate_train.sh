@@ -12,27 +12,27 @@ export CUDA_VISIBLE_DEVICES="2"
 subj=1 
 pretrain_model_name="multisubject_subj0${subj}_hypatia_new_vd_dual_proj"
 echo model_name=${pretrain_model_name}
-python Train.py \
-    --data_path=../dataset \
-    --cache_dir=../cache \
-    --model_name=${pretrain_model_name} \
-    --multi_subject --subj=${subj} \
-    --batch_size=${BATCH_SIZE} \
-    --max_lr=3e-5 \
-    --mixup_pct=.33 \
-    --num_epochs=150 \
-    --use_prior \
-    --prior_scale=30 \
-    --clip_scale=1 \
-    --blur_scale=.5 \
-    --no-use_image_aug \
-    --n_blocks=4 \
-    --hidden_dim=1024 \
-    --num_sessions=40 \
-    --ckpt_interval=999 \
-    --ckpt_saving \
-    --wandb_log \
-    --dual_guidance
+# python Train.py \
+#     --data_path=../dataset \
+#     --cache_dir=../cache \
+#     --model_name=${pretrain_model_name} \
+#     --multi_subject --subj=${subj} \
+#     --batch_size=${BATCH_SIZE} \
+#     --max_lr=3e-5 \
+#     --mixup_pct=.33 \
+#     --num_epochs=150 \
+#     --use_prior \
+#     --prior_scale=30 \
+#     --clip_scale=1 \
+#     --blur_scale=.5 \
+#     --no-use_image_aug \
+#     --n_blocks=4 \
+#     --hidden_dim=1024 \
+#     --num_sessions=40 \
+#     --ckpt_interval=999 \
+#     --ckpt_saving \
+#     --wandb_log \
+#     --dual_guidance
 
 # singlesubject finetuning
 
