@@ -24,7 +24,7 @@ echo model_name=${model_name}
 #     --weight_decay=60000 \
 #     --plus
 
-for mode in "imagery" "vision"; do
+for mode in "vision"; do #"imagery" 
 
     python recon_inference_mi_ridge.py \
         --model_name $model_name \
