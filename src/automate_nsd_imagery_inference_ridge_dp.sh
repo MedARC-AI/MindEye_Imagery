@@ -15,7 +15,7 @@ subj=1
 model_name="subj0${subj}_40sess_hypatia_ridge_flat_dp5"
 echo model_name=${model_name}
 
-for mode in "imagery"; do #"vision"
+for mode in "vision"; do # "imagery"
     python recon_inference_mi.py \
         --model_name $model_name \
         --subj $subj \
