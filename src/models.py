@@ -938,7 +938,7 @@ class IPAdapter:
         ip_layers.load_state_dict(state_dict["ip_adapter"])
 
     @torch.inference_mode()
-    def get_image_embeds(self, pil_image=None, clip_image_embeds=None):
+    def embed_image(self, pil_image=None, clip_image_embeds=None):
         if pil_image is not None:
             if isinstance(pil_image, Image.Image):
                 pil_image = [pil_image]
@@ -985,7 +985,7 @@ class IPAdapter:
         if not isinstance(negative_prompt, List):
             negative_prompt = [negative_prompt] * num_prompts
 
-        image_prompt_embeds, uncond_image_prompt_embeds = self.get_image_embeds(
+        image_prompt_embeds, uncond_image_prompt_embeds = self.embed_image(
             pil_image=pil_image, clip_image_embeds=clip_image_embeds
         )
         bs_embed, seq_len, _ = image_prompt_embeds.shape
@@ -1066,9 +1066,14 @@ class IPAdapterPlusXLEmbedder:
         # ip_layers.load_state_dict(state_dict["ip_adapter"])
 
     @torch.no_grad()
-    def get_image_embeds(self, pil_image):
+    def embed_image(self, pil_image):
         if isinstance(pil_image, PIL.Image.Image):
             pil_image = [pil_image]
+        if isinstance(pil_image, torch.Tensor):
+            image_list = []
+            for ind_image in pil_image:
+                image_list.append(transforms.ToPILImage()(ind_image.cpu()).convert('RGB'))
+            pil_image = image_list
         clip_image = self.clip_image_processor(images=pil_image, return_tensors="pt").pixel_values
         clip_image = clip_image.to(self.device, dtype=torch.float16)
         clip_image_embeds = self.image_encoder(clip_image, output_hidden_states=True).hidden_states[-2]
@@ -1092,9 +1097,14 @@ class IPAdapterPlusXL_LoRA(IPAdapter):
         return image_proj_model
 
     @torch.no_grad()
-    def get_image_embeds(self, pil_image):
+    def embed_image(self, pil_image):
         if isinstance(pil_image, PIL.Image.Image):
             pil_image = [pil_image]
+        if isinstance(pil_image, torch.Tensor):
+            image_list = []
+            for ind_image in pil_image:
+                image_list.append(transforms.ToPILImage()(ind_image.cpu()).convert('RGB'))
+            pil_image = image_list
         clip_image = self.clip_image_processor(images=pil_image, return_tensors="pt").pixel_values
         clip_image = clip_image.to(self.device, dtype=torch.float16)
         clip_image_embeds = self.image_encoder(clip_image, output_hidden_states=True).hidden_states[-2]
@@ -1143,7 +1153,7 @@ class IPAdapterPlusXL_LoRA(IPAdapter):
         if not isinstance(negative_prompt, List):
             negative_prompt = [negative_prompt] * num_prompts
         if pil_image is not None:
-            image_prompt_embeds, uncond_image_prompt_embeds = self.get_image_embeds(pil_image)
+            image_prompt_embeds, uncond_image_prompt_embeds = self.embed_image(pil_image)
         elif image_embeds is not None:
             image_prompt_embeds = image_embeds
             uncond_image_prompt_embeds = self.get_uncond_image_embeds()
@@ -1189,9 +1199,14 @@ class IPAdapterXL_LoRA(IPAdapter):
     """SDXL"""
 
     @torch.no_grad()
-    def get_image_embeds(self, pil_image):
+    def embed_image(self, pil_image):
         if isinstance(pil_image, PIL.Image.Image):
             pil_image = [pil_image]
+        if isinstance(pil_image, torch.Tensor):
+            image_list = []
+            for ind_image in pil_image:
+                image_list.append(transforms.ToPILImage()(ind_image.cpu()).convert('RGB'))
+            pil_image = image_list
         clip_image = self.clip_image_processor(images=pil_image, return_tensors="pt").pixel_values
         clip_image = clip_image.to(self.device, dtype=torch.float16)
         clip_image_embeds = self.image_encoder(clip_image).image_embeds
@@ -1241,7 +1256,7 @@ class IPAdapterXL_LoRA(IPAdapter):
         if not isinstance(negative_prompt, List):
             negative_prompt = [negative_prompt] * num_prompts
         if pil_image is not None:
-            image_prompt_embeds, uncond_image_prompt_embeds = self.get_image_embeds(pil_image)
+            image_prompt_embeds, uncond_image_prompt_embeds = self.embed_image(pil_image)
         elif image_embeds is not None:
             image_prompt_embeds = image_embeds
             uncond_image_prompt_embeds = self.get_uncond_image_embeds()
@@ -1326,9 +1341,14 @@ class IPAdapterXLEmbedder:
         # ip_layers.load_state_dict(state_dict["ip_adapter"])
 
     @torch.no_grad()
-    def get_image_embeds(self, pil_image):
+    def embed_image(self, pil_image):
         if isinstance(pil_image, PIL.Image.Image):
             pil_image = [pil_image]
+        if isinstance(pil_image, torch.Tensor):
+            image_list = []
+            for ind_image in pil_image:
+                image_list.append(transforms.ToPILImage()(ind_image.cpu()).convert('RGB'))
+            pil_image = image_list
         clip_image = self.clip_image_processor(images=pil_image, return_tensors="pt").pixel_values
         clip_image_embeds = self.image_encoder(clip_image.to(self.device, dtype=torch.float16)).image_embeds
         image_prompt_embeds = self.image_proj_model(clip_image_embeds)
