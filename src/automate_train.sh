@@ -38,28 +38,28 @@ echo model_name=${pretrain_model_name}
 
 model_name="pretrained_subj0${subj}_40sess_hypatia_new_vd_dual_proj"
 echo model_name=${model_name}
-python Train.py --data_path=../dataset \
-    --cache_dir=../cache \
-    --model_name=${model_name} \
-    --no-multi_subject \
-    --subj=${subj} \
-    --batch_size=${BATCH_SIZE} \
-    --max_lr=3e-5 \
-    --mixup_pct=.33 \
-    --num_epochs=150 \
-    --use_prior \
-    --prior_scale=30 \
-    --clip_scale=1 \
-    --blur_scale=.5 \
-    --no-use_image_aug \
-    --n_blocks=4 \
-    --hidden_dim=1024 \
-    --num_sessions=40 \
-    --ckpt_interval=999 \
-    --ckpt_saving \
-    --wandb_log \
-    --multisubject_ckpt=../train_logs/${pretrain_model_name} \
-    --dual_guidance 
+# python Train.py --data_path=../dataset \
+#     --cache_dir=../cache \
+#     --model_name=${model_name} \
+#     --no-multi_subject \
+#     --subj=${subj} \
+#     --batch_size=${BATCH_SIZE} \
+#     --max_lr=3e-5 \
+#     --mixup_pct=.33 \
+#     --num_epochs=150 \
+#     --use_prior \
+#     --prior_scale=30 \
+#     --clip_scale=1 \
+#     --blur_scale=.5 \
+#     --no-use_image_aug \
+#     --n_blocks=4 \
+#     --hidden_dim=1024 \
+#     --num_sessions=40 \
+#     --ckpt_interval=999 \
+#     --ckpt_saving \
+#     --wandb_log \
+#     --multisubject_ckpt=../train_logs/${pretrain_model_name} \
+#     --dual_guidance 
 
 
 for mode in "imagery" "vision"; do
@@ -71,7 +71,9 @@ for mode in "imagery" "vision"; do
         --data_path ../dataset \
         --hidden_dim 1024 \
         --n_blocks 4 \
-        --dual_guidance
+        --dual_guidance \
+        --save_raw \
+        --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/
 
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
