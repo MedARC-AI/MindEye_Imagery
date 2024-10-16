@@ -649,7 +649,7 @@ def condition_average_old(x, y, cond, nest=False):
 #average: whether to average across trials, will produce x that is (stimuli, 1, voxels)
 #nest: whether to nest the data according to stimuli, will produce x that is (stimuli, trials, voxels)
 #data_root: path to where the dataset is saved.
-def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, data_root="../dataset/"):
+def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, whole_brain=False, data_root="../dataset/"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
     img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -675,16 +675,23 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                             np.logical_or(exps=='imgA_1', exps=='imgA_2'),
                                             np.logical_or(exps=='imgB_1', exps=='imgB_2')),
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
+    
     # Load normalized betas
-    if snr == -1.0:
-        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
-    else:
-        if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
-            create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
-            create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
+    if whole_brain:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
-        snr_mask = calculate_snr_mask(subject, snr, data_path=data_root)
-        x = x[:,snr_mask]
+    elif top_n_rois != -1:
+        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
+        x = mask_whole_brain_on_top_n_rois(subject, x, top_n_rois, data_root)  
+    else:
+        if snr == -1.0:
+            x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
+        else:
+            if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
+                create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
+                create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
+            x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
+            snr_mask = calculate_snr_mask(subject, snr, data_path=data_root)
+            x = x[:,snr_mask]
     # Find the trial indices conditioned on the type of trials we want to load
     cond_im_idx = {n: [image_map[c] for c in cues[idx]] for n,idx in cond_idx.items()}
     conditionals = cond_im_idx[mode+stimtype]
@@ -816,7 +823,6 @@ def load_imageryrf(subject, mode, mask=True, stimtype="object", average=False, n
     else:
         print(x.shape, y.shape)
         return x, y
-    
     
 def read_betas(subject, session_index, trial_index=[], data_type='betas_fithrf_GLMdenoise_RR', data_format='fsaverage', mask=None, data_path="../dataset"):
         """read_betas read betas from MRI files
@@ -1129,6 +1135,71 @@ def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/"
             betas = torch.from_numpy(betas).to("cpu")
         
     return betas.to(data_type)
+
+
+def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, data_path): 
+
+    brain_region_masks = {}
+    
+    # Load the ROI collection file
+    with h5py.File(f'{data_path}/roi_collection.hdf5', 'r') as file:
+        
+        # Iterate over each subject
+        for subject in file.keys():
+            subject_group = file[subject]
+            subject_masks = {}
+            
+            # Load the masks data for each subject
+            for region in subject_group.keys():
+                subject_masks[region] = subject_group[region][:]
+            brain_region_masks[subject] = subject_masks
+    
+    # Load masks for the excluded subject
+    subject_masks = brain_region_masks[f"subj0{excluded_subject}"]
+    
+    rank_order_rois = {}
+    
+    # Load rank order ROIs from JSON file
+    with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order.json', 'r') as file:
+        rank_order_rois = json.load(file)
+    
+    rank_order_rois_keys = list(rank_order_rois.keys())
+    
+    # Create initial ROI mask
+    roi_mask = np.logical_or(subject_masks[rank_order_rois_keys[0]], subject_masks[rank_order_rois_keys[0]])
+    
+    # Apply ROI masks for top_n_rois
+    for i in range(top_n_rois):
+        roi_mask = np.logical_or(roi_mask, subject_masks[rank_order_rois_keys[i]])
+    
+    # Convert to PyTorch tensor
+    roi_mask = torch.from_numpy(roi_mask).to("cpu")
+    
+    # Apply mask to betas
+    betas = betas[..., roi_mask]
+    
+    return betas
+
+
+def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.float16, top_n_rois=-1, data_path="../dataset/"):
+    
+    if top_n_rois != -1.0:
+        
+        # Load the betas for the excluded subject
+        with h5py.File(f'{data_path}/betas_all_whole_brain_subj{excluded_subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+    
+        betas = mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, data_path)
+    
+    else:              
+        # Load betas without applying any ROI masking
+        with h5py.File(f'{data_path}/betas_all_subj{excluded_subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+    
+    return betas.to(data_type)
+
 
 def load_nsd(subject, betas=None, data_path="../dataset/"):
     # Load betas if not provided
