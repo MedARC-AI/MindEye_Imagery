@@ -1,9 +1,9 @@
 
 jupyter nbconvert Train_ridge_cascade.ipynb --to python
 jupyter nbconvert recon_inference_mi_ridge_cascade.ipynb --to python
-# jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
-# jupyter nbconvert plots_across_subjects.ipynb --to python
-# jupyter nbconvert plots_across_methods.ipynb --to python
+jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
+jupyter nbconvert plots_across_subjects.ipynb --to python
+jupyter nbconvert plots_across_methods.ipynb --to python
 
 export NUM_GPUS=1  # Set to equal gres=gpu:#!
 export BATCH_SIZE=50 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
@@ -12,7 +12,7 @@ export CUDA_VISIBLE_DEVICES="0"
 
 subj=1 
 
-model_name="subj01_40sess_hypatia_ridge_sc"
+model_name="subj01_40sess_hypatia_ridge_sc3"
 echo model_name=${model_name}
 
 # python Train_ridge_cascade.py \
@@ -64,9 +64,11 @@ python plots_across_methods.py \
     pretrained_subj01_40sess_hypatia_vd2, \
     pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
     subj01_40sess_hypatia_turbo_ridge_flat3, \
-    subj01_40sess_hypatia_ridge_flat_dp5,
-    subj01_40sess_hypatia_ridge_rank_order_rois_13,
-    subj01_40sess_hypatia_ridge_sc"  \
+    subj01_40sess_hypatia_ridge_flat_dp5, \
+    subj01_40sess_hypatia_ridge_rank_order_rois_13, \
+    subj01_40sess_hypatia_ridge_sc2, \
+    subj01_40sess_hypatia_ridge_sc3" \
     --data_path ../dataset \
     --output_path ../figs/ \
     --output_file methods_scatter_reduced2
+    

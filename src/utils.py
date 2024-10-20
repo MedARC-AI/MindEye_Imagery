@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 from torchvision import transforms
+import torchvision
+from io import BytesIO
+from IPython.display import display, Image
+import torchvision.transforms.functional as F
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -1361,3 +1365,23 @@ def retrieve_timesteps(
         scheduler.set_timesteps(num_inference_steps, device=device, **kwargs)
         timesteps = scheduler.timesteps
     return timesteps, num_inference_steps
+
+def show_images(images, rows=None, cols=None, return_images=False, **kwargs):
+    if images.size(1) == 1:
+        images = images.repeat(1, 3, 1, 1)
+    elif images.size(1) > 3:
+        images = images[:, :3]
+    
+    if rows is None:
+        rows = 1
+    if cols is None:
+        cols = images.size(0) // rows
+
+    _, _, h, w = images.shape
+    grid = PIL.Image.new('RGB', size=(cols * w, rows * h))
+
+    for i, img in enumerate(images):
+        img = torchvision.transforms.functional.to_pil_image(img.clamp(0, 1))
+        grid.paste(img, box=(i % cols * w, i // cols * h))
+    
+    return grid
