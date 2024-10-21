@@ -262,7 +262,7 @@ def select_annotations(annots, random=True):
     txt = txt.flatten()
     return txt
 
-from generative_models.sgm.util import append_dims
+# from generative_models.sgm.util import append_dims
 
 def unclip_recon(x, diffusion_engine, vector_suffix,
                  num_samples=1, offset_noise_level=0.04):

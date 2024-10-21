@@ -74,7 +74,8 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 # --output_file methods_comparison_ridge_alpha
 
 python plots_across_methods.py \
---methods "subj03_40sess_hypatia_ridge_rank_order_rois_samplewise_1, \
+--methods "subj03_40sess_hypatia_nsd_general, \
+subj03_40sess_hypatia_ridge_rank_order_rois_samplewise_1, \
 subj03_40sess_hypatia_ridge_rank_order_rois_samplewise_2, \
 subj03_40sess_hypatia_ridge_rank_order_rois_samplewise_3, \
 subj03_40sess_hypatia_ridge_rank_order_rois_samplewise_4, \
@@ -109,7 +110,44 @@ subj03_40sess_hypatia_ridge_rank_order_rois_samplewise_30" \
 --output_file methods_comparison_roi_threshold_s3
 
 python plots_across_methods.py \
---methods "subj06_40sess_hypatia_ridge_rank_order_rois_samplewise_1, \
+--methods "subj04_40sess_hypatia_nsd_general, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_1, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_2, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_3, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_4, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_5, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_6, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_7, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_8, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_9, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_10, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_11, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_12, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_13, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_14, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_15, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_16, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_17, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_18, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_19, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_20, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_21, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_22, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_23, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_24, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_25, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_26, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_27, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_28, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_29, \
+subj04_40sess_hypatia_ridge_rank_order_rois_samplewise_30" \
+--data_path ../dataset \
+--output_path ../figs/ \
+--output_file methods_comparison_roi_threshold_s4
+
+python plots_across_methods.py \
+--methods "subj06_40sess_hypatia_nsd_general, \
+subj06_40sess_hypatia_ridge_rank_order_rois_samplewise_1, \
 subj06_40sess_hypatia_ridge_rank_order_rois_samplewise_2, \
 subj06_40sess_hypatia_ridge_rank_order_rois_samplewise_3, \
 subj06_40sess_hypatia_ridge_rank_order_rois_samplewise_4, \
@@ -142,3 +180,39 @@ subj06_40sess_hypatia_ridge_rank_order_rois_samplewise_30" \
 --data_path ../dataset \
 --output_path ../figs/ \
 --output_file methods_comparison_roi_threshold_s6
+
+python plots_across_methods.py \
+--methods "subj08_40sess_hypatia_nsd_general, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_1, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_2, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_3, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_4, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_5, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_6, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_7, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_8, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_9, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_10, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_11, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_12, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_13, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_14, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_15, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_16, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_17, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_18, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_19, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_20, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_21, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_22, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_23, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_24, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_25, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_26, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_27, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_28, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_29, \
+subj08_40sess_hypatia_ridge_rank_order_rois_samplewise_30" \
+--data_path ../dataset \
+--output_path ../figs/ \
+--output_file methods_comparison_roi_threshold_s8
