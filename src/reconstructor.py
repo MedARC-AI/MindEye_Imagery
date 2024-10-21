@@ -98,7 +98,8 @@ class Reconstructor(object):
                     shift_c=2,
                     shift_b=1,
                     num_steps_b=10,
-                    uncond_multiplier=0):
+                    uncond_multiplier=0,
+                    guidance_ratio=1):
         height, width = 1024, 1024
         stage_c_latent_shape, stage_b_latent_shape = calculate_latent_sizes(height, width, batch_size=n_samples)
         self.extras.sampling_configs['cfg'] = cfg_c
@@ -131,9 +132,9 @@ class Reconstructor(object):
         if int(strength * num_steps_c) > 0:
             
             # Prep CLIP guidance, we are only guiding the first stage
-            conditions = {"clip_text" : c_t.reshape((1, 77, 1280)).expand(n_samples, -1, -1), 
+            conditions = {"clip_text" : c_t.reshape((-1, 77, 1280)).expand(n_samples, -1, -1), 
                         "clip_text_pooled" : c_t.mean(dim=1).to(self.device, self.dtype), # Placeholder, will replace with uncond guidance
-                        "clip_img" : c_i.reshape((1,1,768)).expand(n_samples, -1, -1)}
+                        "clip_img" : c_i.reshape((-1,1,768)).expand(n_samples, -1, -1)}
             #Unconditional guidance
             batch = {'captions': [""] * n_samples}
             conditions_b = self.core_b.get_conditions(batch, self.models_b, self.extras_b, is_eval=True, is_unconditional=False)
