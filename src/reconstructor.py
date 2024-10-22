@@ -9,7 +9,6 @@ from tqdm import tqdm
 from torchvision import transforms
 sys.path.append("StableCascade/")
 from inference.utils import *
-from core.utils import load_or_fail
 from train import WurstCoreC, WurstCoreB
 
 
@@ -20,11 +19,15 @@ class Reconstructor(object):
         self.cache_dir = cache_dir
         self.dtype = torch.bfloat16
         # SETUP STAGE C
-        config_file = f'{cache_dir}stage_c_3b.yaml'
-        with open(config_file, "r", encoding="utf-8") as file:
-            loaded_config = yaml.safe_load(file)
+        config_c = {
+                "model_version": "3.6B",
+                "dtype": "bfloat16",
+                "effnet_checkpoint_path": f"{cache_dir}/effnet_encoder.safetensors",
+                "previewer_checkpoint_path": f"{cache_dir}/previewer.safetensors",
+                "generator_checkpoint_path": f"{cache_dir}/stage_c_bf16.safetensors",
+            }
 
-        self.core = WurstCoreC(config_dict=loaded_config, device=device, training=False)
+        self.core = WurstCoreC(config_dict=config_c, device=device, training=False)
         # SETUP MODELS & DATA
         self.extras = self.core.setup_extras_pre()
         self.models = self.core.setup_models(self.extras)
@@ -37,11 +40,18 @@ class Reconstructor(object):
         
         if not embedder_only:
             # SETUP STAGE B
-            config_file_b = f'{cache_dir}stage_b_3b.yaml'
-            with open(config_file_b, "r", encoding="utf-8") as file:
-                config_file_b = yaml.safe_load(file)
+            config_b = {
+                "model_version": "3B",
+                "dtype": "bfloat16",
+                "batch_size": 4,
+                "image_size": 1024,
+                "grad_accum_steps": 1,
+                "effnet_checkpoint_path": f"{cache_dir}/effnet_encoder.safetensors",
+                "stage_a_checkpoint_path": f"{cache_dir}/stage_a.safetensors",
+                "generator_checkpoint_path": f"{cache_dir}/stage_b_bf16.safetensors"
+            }
                 
-            self.core_b = WurstCoreB(config_dict=config_file_b, device=device, training=False)
+            self.core_b = WurstCoreB(config_dict=config_b, device=device, training=False)
         
             self.extras_b = self.core_b.setup_extras_pre()
             self.models_b = self.core_b.setup_models(self.extras_b, skip_clip=True)
