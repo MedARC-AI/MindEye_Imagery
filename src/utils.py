@@ -1385,3 +1385,8 @@ def show_images(images, rows=None, cols=None, return_images=False, **kwargs):
         grid.paste(img, box=(i % cols * w, i // cols * h))
     
     return grid
+
+def resize_image(image, size=768):
+    tensor_image = F.to_tensor(image)
+    resized_image = F.resize(tensor_image, size, antialias=True)
+    return resized_image
