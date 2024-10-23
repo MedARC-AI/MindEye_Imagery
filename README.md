@@ -1,4 +1,4 @@
-# MindEye2
+# MindEye Imagery (WIP)
 
 ## Installation
 
@@ -15,7 +15,7 @@ git clone https://github.com/MedARC-AI/MindEye_Imagery.git
 Warning: **This will download over 300 GB of data!** You may want to only download some parts of the huggingface dataset (e.g., not all the pretrained models contained in "train_logs", only one of the preparations of brain activity—whole brain or not—whole brain betas are only necessary for SNR thresholding.)
 
 ```
-cd MindEyeV2
+cd MindEye_Imagery
 git clone https://huggingface.co/datasets/pscotti/mindeyev2 .
 git clone https://huggingface.co/datasets/reesekneeland/mindeye_imagery .
 ```
