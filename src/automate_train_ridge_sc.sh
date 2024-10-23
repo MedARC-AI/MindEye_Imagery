@@ -25,7 +25,7 @@ echo model_name=${model_name}
 #     --batch_size=${BATCH_SIZE} \
 #     --weight_decay=60000
 
-for mode in "vision" "imagery"; do
+for mode in "imagery"; do
 
     # python recon_inference_mi_ridge_cascade.py \
     #     --model_name $model_name \
