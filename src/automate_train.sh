@@ -17,7 +17,6 @@ python Train.py \
     --model_name=${model_name} \
     --no-multi_subject \
     --subj=${subj} \
-    --batch_size=${BATCH_SIZE} \
     --weight_decay=60000 \
     --dual_guidance
 
