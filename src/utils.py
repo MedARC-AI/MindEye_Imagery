@@ -649,7 +649,7 @@ def condition_average_old(x, y, cond, nest=False):
 #average: whether to average across trials, will produce x that is (stimuli, 1, voxels)
 #nest: whether to nest the data according to stimuli, will produce x that is (stimuli, trials, voxels)
 #data_root: path to where the dataset is saved.
-def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, whole_brain=False, data_root="../dataset/"):
+def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, samplewise=False, whole_brain=False, data_root="../dataset"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
     img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -681,7 +681,7 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
     elif top_n_rois != -1:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
-        x = mask_whole_brain_on_top_n_rois(subject, x, top_n_rois, data_root)  
+        x = mask_whole_brain_on_top_n_rois(subject, x, top_n_rois, samplewise, data_root)  
     else:
         if snr == -1.0:
             x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
@@ -1136,41 +1136,63 @@ def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/"
         
     return betas.to(data_type)
 
+def load_subject_masks(subject_ids, data_path):
+    subject_masks = {}
 
-def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, data_path): 
+    # Preload masks for all subjects
+    for subject_id in subject_ids:
+        mask_path = f"{data_path}/combined_masks/{subject_id}_combined_mask.nii.gz"
+        mask = nb.load(mask_path).get_fdata()
 
-    brain_region_masks = {}
-    
-    # Load the ROI collection file
-    with h5py.File(f'{data_path}/roi_collection.hdf5', 'r') as file:
-        
-        # Iterate over each subject
-        for subject in file.keys():
-            subject_group = file[subject]
-            subject_masks = {}
-            
-            # Load the masks data for each subject
-            for region in subject_group.keys():
-                subject_masks[region] = subject_group[region][:]
-            brain_region_masks[subject] = subject_masks
-    
-    # Load masks for the excluded subject
-    subject_masks = brain_region_masks[f"subj0{excluded_subject}"]
+        brainmask_path = f"{data_path}/nsddata/ppdata/{subject_id}/func1pt8mm/roi/brainmask_inflated_1.0.nii"
+        brainmask_inflated = nb.load(brainmask_path).get_fdata()
+
+        # Clean up brainmask
+        brainmask_inflated = np.nan_to_num(brainmask_inflated)
+        brainmask_inflated = np.where(brainmask_inflated == 1.0, True, False)
+
+        mask = mask[brainmask_inflated]
+
+        # Load ROI labels
+        labels_path = f"{data_path}/combined_masks/{subject_id}_labels.txt"
+        label_to_roi = {}
+        with open(labels_path, 'r') as label_file:
+            for line in label_file:
+                idx, roi_name = line.strip().split(": ")
+                if roi_name != 'No Mask':
+                    label_to_roi[int(idx)] = roi_name
+
+        # Create filtered masks for ROIs
+        filtered_mask = {roi: mask == number for number, roi in label_to_roi.items()}
+        subject_masks[subject_id] = {"filtered_mask": filtered_mask, "label_to_roi": label_to_roi}
+
+    return subject_masks
+
+
+def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, data_path): 
+
+    subject_ids = [f'subj0{i}' for i in range(1, 9)]
+    subject_masks = load_subject_masks(subject_ids, data_path)
+    excluded_subject_mask = subject_masks[f'subj0{excluded_subject}']['filtered_mask']
     
     rank_order_rois = {}
     
     # Load rank order ROIs from JSON file
-    with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order.json', 'r') as file:
-        rank_order_rois = json.load(file)
+    if samplewise:
+        with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order_samplewise.json', 'r') as file:
+            rank_order_rois = json.load(file)
+    else:
+        with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order_voxelwise.json', 'r') as file:
+            rank_order_rois = json.load(file)
     
     rank_order_rois_keys = list(rank_order_rois.keys())
     
     # Create initial ROI mask
-    roi_mask = np.logical_or(subject_masks[rank_order_rois_keys[0]], subject_masks[rank_order_rois_keys[0]])
+    roi_mask = np.logical_or(excluded_subject_mask[rank_order_rois_keys[0]], excluded_subject_mask[rank_order_rois_keys[0]])
     
     # Apply ROI masks for top_n_rois
     for i in range(top_n_rois):
-        roi_mask = np.logical_or(roi_mask, subject_masks[rank_order_rois_keys[i]])
+        roi_mask = np.logical_or(roi_mask, excluded_subject_mask[rank_order_rois_keys[i]])
     
     # Convert to PyTorch tensor
     roi_mask = torch.from_numpy(roi_mask).to("cpu")
@@ -1181,7 +1203,7 @@ def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, data_pat
     return betas
 
 
-def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.float16, top_n_rois=-1, data_path="../dataset/"):
+def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.float16, top_n_rois=-1, samplewise=False, data_path="../dataset/"):
     
     if top_n_rois != -1.0:
         
@@ -1190,7 +1212,7 @@ def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.fl
             betas = f['betas'][:]
             betas = torch.from_numpy(betas).to("cpu")
     
-        betas = mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, data_path)
+        betas = mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, data_path)
     
     else:              
         # Load betas without applying any ROI masking
@@ -1355,13 +1377,13 @@ def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
 
 def get_kastner_masks(subject, data_path):
     kastner_labels = f"{data_path}/nsddata/freesurfer/subj0{subject}/label/Kastner2015.mgz.ctab"
-    brainmask_inflated = nib.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/brainmask_inflated_1.0.nii").get_fdata()
+    brainmask_inflated = nb.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/brainmask_inflated_1.0.nii").get_fdata()
     brainmask_inflated = np.nan_to_num(brainmask_inflated)
     brainmask_inflated = np.where(brainmask_inflated==1.0, True, False)
     
     masks = []
     for hemi in ["lh", "rh"]:
-        masks.append(nib.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/{hemi}.Kastner2015.nii.gz").get_fdata())
+        masks.append(nb.load(f"{data_path}/nsddata/ppdata/subj0{subject}/func1pt8mm/roi/{hemi}.Kastner2015.nii.gz").get_fdata())
     kastner_mask = masks[0] + masks[1]
     kastner_mask = kastner_mask[brainmask_inflated]
     with open(kastner_labels, 'r') as file:

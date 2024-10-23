@@ -252,6 +252,10 @@ parser.add_argument(
     "--top_n_rank_order_rois",type=int, default=-1,
     help="Used for selecting the top n rois on a whole brain to narrow down voxels.",
 )
+parser.add_argument(
+    "--samplewise_rank_order_rois",action=argparse.BooleanOptionalAction, default=False,
+    help="Use the samplewise rank order rois versus voxelwise",
+)
 if utils.is_interactive():
     args = parser.parse_args(jupyter_args)
 else:
@@ -343,7 +347,7 @@ for s in subj_list:
                             .to_tuple(*["behav", "past_behav", "future_behav", "olds_behav"])
         train_dl[f'subj{s:02d}'] = torch.utils.data.DataLoader(train_data[f'subj{s:02d}'], batch_size=batch_size, shuffle=False, drop_last=True, pin_memory=True)
         # betas = utils.create_snr_betas(subject=s, data_type=data_type, data_path=data_path, threshold = snr_threshold)
-        betas = utils.load_subject_based_on_rank_order_rois(excluded_subject=s, data_type=data_type, top_n_rois=top_n_rank_order_rois)
+        betas = utils.load_subject_based_on_rank_order_rois(excluded_subject=s, data_type=data_type, top_n_rois=top_n_rank_order_rois, samplewise=samplewise_rank_order_rois)
         x_train, valid_nsd_ids_train, x_test, test_nsd_ids = utils.load_nsd(subject=s, betas=betas, data_path=data_path)
         print(x_train.shape, valid_nsd_ids_train.shape)
         num_voxels_list.append(x_train[0].shape[-1])
@@ -480,6 +484,10 @@ clip_seq_dim = 257
 clip_text_seq_dim=77
 clip_extractor = Reconstructor(device=device, cache_dir=cache_dir)
 clip_variant = "ViT-L-14"
+text_embedding_variant = "ViT-L-14"
+image_embedding_variant = "ViT-L-14"
+clip_text_emb_dim=768
+
 
 
 # # Creating block of CLIP embeddings
@@ -487,7 +495,7 @@ clip_variant = "ViT-L-14"
 # In[ ]:
 
 
-file_path = f"{data_path}/preprocessed_data/{clip_variant}_image_embeddings.pt"
+file_path = f"{data_path}/preprocessed_data/{image_embedding_variant}_image_embeddings.pt"
 emb_batch_size = 50
 if not os.path.exists(file_path):
     # Generate CLIP Image embeddings
@@ -501,19 +509,32 @@ if not os.path.exists(file_path):
     torch.save(clip_image, file_path)
 else:
     clip_image = torch.load(file_path)
-
+clip_image_train = torch.zeros((len(valid_nsd_ids_train), clip_seq_dim, clip_emb_dim)).to("cpu")
+for i, idx in enumerate(valid_nsd_ids_train):
+    clip_image_train[i] = clip_image[idx].reshape((-1, clip_seq_dim, clip_emb_dim))
+file_path = f"{data_path}/preprocessed_data/subject{subj}/{image_embedding_variant}_image_embeddings_train.pt"
+if not os.path.exists(file_path):
+    torch.save(clip_image_train, file_path)
+        
 if dual_guidance:
-    file_path_txt = f"{data_path}/preprocessed_data/{clip_variant}_text_embeddings.pt"
+    file_path_txt = f"{data_path}/preprocessed_data/{text_embedding_variant}_text_embeddings.pt"
     if not os.path.exists(file_path_txt):
         # Generate CLIP Text embeddings
         print("Generating CLIP Text embeddings!")
-        clip_text = torch.zeros((len(captions), clip_text_seq_dim, clip_emb_dim)).to("cpu")
+        clip_text = torch.zeros((len(captions), clip_text_seq_dim, clip_text_emb_dim)).to("cpu")
         for i in tqdm(range(len(captions) // emb_batch_size), desc="Encoding captions..."):
             batch_captions = captions[i * emb_batch_size:i * emb_batch_size + emb_batch_size].tolist()
             clip_text[i * emb_batch_size:i * emb_batch_size + emb_batch_size] = clip_extractor.embed_text(batch_captions).detach().to("cpu")
         torch.save(clip_text, file_path_txt)
     else:
         clip_text = torch.load(file_path_txt)
+    clip_text_train = torch.zeros((len(valid_nsd_ids_train), clip_text_seq_dim, clip_text_emb_dim)).to("cpu")
+    for i, idx in enumerate(valid_nsd_ids_train):
+        clip_text_train[i] = clip_text[idx].reshape((-1, clip_text_seq_dim, clip_text_emb_dim))
+    file_path_txt = f"{data_path}/preprocessed_data/subject{subj}/{text_embedding_variant}_text_embeddings_train.pt"
+    if not os.path.exists(file_path_txt):
+        torch.save(clip_text_train, file_path_txt)
+        
 
 if blurry_recon:
     file_path = f"{data_path}/preprocessed_data/autoenc_image_embeddings.pt"
@@ -532,6 +553,13 @@ if blurry_recon:
 
     else:
         vae_image = torch.load(file_path)
+    vae_image_train = torch.zeros((len(valid_nsd_ids_train), 3136)).to("cpu")
+    for i, idx in enumerate(valid_nsd_ids_train):
+        vae_image_train[i] = vae_image[idx]
+    file_path_vae = f"{data_path}/preprocessed_data/subject{subj}/autoenc_image_embeddings_train.pt"
+    if not os.path.exists(file_path_vae):
+        torch.save(vae_image_train, file_path_vae)
+print(f"Loaded train image clip and text clip for subj{subj}!", clip_image_train.shape)
 
 
 # In[ ]:

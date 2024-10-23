@@ -11,13 +11,13 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 export NUM_GPUS=1  # Set to equal gres=gpu:#!
 export BATCH_SIZE=50 # 21 for multisubject / 24 for singlesubject (orig. paper used 42 for multisubject / 24 for singlesubject)
 export GLOBAL_BATCH_SIZE=$((BATCH_SIZE * NUM_GPUS))
-export CUDA_VISIBLE_DEVICES="0"
+export CUDA_VISIBLE_DEVICES="1"
 
 # Loop over subjects and ROIs
-for subj in 3 4 6 8; do
-    for num_rois in {1..20}; do 
+for subj in 1; do
+    for num_rois in {1..30}; do 
 
-        model_name="subj0${subj}_40sess_hypatia_ridge_rank_order_rois_${num_rois}"
+        model_name="subj0${subj}_40sess_hypatia_ridge_rank_order_rois_samplewise_${num_rois}"
         echo "model_name=${model_name}"
 
         # Train the model
@@ -30,7 +30,8 @@ for subj in 3 4 6 8; do
             --batch_size ${BATCH_SIZE} \
             --weight_decay 60000 \
             --dual_guidance \
-            --top_n_rank_order_rois ${num_rois}
+            --top_n_rank_order_rois ${num_rois} \
+            --samplewise_rank_order_rois
 
         # Perform inference and evaluations for both "vision" and "imagery" modes
         for mode in "vision" "imagery"; do
@@ -44,7 +45,8 @@ for subj in 3 4 6 8; do
                 --data_path ../dataset \
                 --save_raw \
                 --dual_guidance \
-                --top_n_rank_order_rois ${num_rois}
+                --top_n_rank_order_rois ${num_rois} \
+                --samplewise_rank_order_rois
 
             # Run final evaluations
             python final_evaluations_mi_multi.py \

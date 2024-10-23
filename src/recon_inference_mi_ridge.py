@@ -140,6 +140,10 @@ parser.add_argument(
     "--top_n_rank_order_rois",type=int, default=-1,
     help="Used for selecting the top n rois on a whole brain to narrow down voxels.",
 )
+parser.add_argument(
+    "--samplewise_rank_order_rois",action=argparse.BooleanOptionalAction,default=False,
+    help="Use the samplewise rank order rois versus voxelwise",
+)
 if utils.is_interactive():
     args = parser.parse_args(jupyter_args)
 else:
@@ -172,7 +176,7 @@ if mode == "synthetic":
 elif subj > 8:
     _, _, voxels, all_images = utils.load_imageryrf(subject=subj-8, mode=mode, stimtype="object", average=False, nest=True, split=True)
 else:
-    voxels, all_images = utils.load_nsd_mental_imagery(subject=subj, mode=mode, stimtype="all", top_n_rois=top_n_rank_order_rois, average=True, nest=False)
+    voxels, all_images = utils.load_nsd_mental_imagery(subject=subj, mode=mode, stimtype="all", top_n_rois=top_n_rank_order_rois, samplewise=samplewise_rank_order_rois, average=True, nest=False)
 num_voxels = voxels.shape[-1]
 
 
