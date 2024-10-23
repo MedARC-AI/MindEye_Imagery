@@ -238,34 +238,46 @@ subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_16, \
 subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_17, \
 subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_18, \
 subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_19, \
-subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_20" \
+subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_20, \
+subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_21, \
+subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_22, \
+subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_23, \
+subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_25, \
+subj03_40sess_hypatia_ridge_rank_order_rois_voxelwise_26" \
 --data_path ../dataset \
 --output_path ../figs/ \
 --output_file methods_comparison_roi_threshold_s3_voxelwise \
 --gradient
 
-python plots_across_methods.py \
---methods "subj06_40sess_hypatia_nsd_general, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_1, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_2, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_3, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_4, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_5, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_6, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_7, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_8, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_9, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_10, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_11, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_12, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_13, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_14, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_15, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_16, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_17, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_18, \
-subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_19" \
---data_path ../dataset \
---output_path ../figs/ \
---output_file methods_comparison_roi_threshold_s6_voxelwise \
---gradient
+
+# python plots_across_methods.py \
+# --methods "subj06_40sess_hypatia_nsd_general, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_1, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_2, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_3, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_4, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_5, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_6, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_7, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_8, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_9, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_10, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_11, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_12, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_13, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_14, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_15, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_16, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_17, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_18, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_19, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_20, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_21, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_22, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_23, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_24, \
+# subj06_40sess_hypatia_ridge_rank_order_rois_voxelwise_25" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_comparison_roi_threshold_s6_voxelwise \
+# --gradient
