@@ -35,22 +35,29 @@ class SD35_Reconstructor(object):
     @torch.no_grad()
     def __init__(self, device="cuda", cache_dir="../cache/", embedder_only=False):
         print(f"Stable Diffusion 3.5 Reconstructor: Loading model...")
-        self.device = device
+        self.device = torch.device(device)
         self.cache_dir = cache_dir
         self.dtype = torch.bfloat16
         self.verbose=False
         self.tokenizer = SD3Tokenizer()
         print("Loading OpenAI CLIP L...")
-        self.clip_l = ClipL(cache_dir, device=device)
+        self.clip_l = ClipL(cache_dir)
         print("Loading OpenCLIP bigG...")
-        self.clip_g = ClipG(cache_dir, device=device)
+        self.clip_g = ClipG(cache_dir)
         print("Loading Google T5-v1-XXL...")
-        self.t5xxl = T5XXL(cache_dir, device=device)
+        self.t5xxl = T5XXL(cache_dir)
+        self.t5xxl.model = self.t5xxl.model.cuda()
         if not embedder_only:
             print("Loading VAE model...")
             self.vae = VAE(f"{cache_dir}/sd3.5_large.safetensors")
+            self.vae.model = self.vae.model.cuda()
             print(f"Loading SD3 model...")
             self.sd3 = SD3(f"{cache_dir}/sd3.5_large.safetensors", shift=3.0, verbose=False)
+            self.sd3.model = self.sd3.model.cuda()
+        else:
+            # These can only fit on the GPU if the main model is not loaded, they speed up feature extraction, but not necessary for reconstruction
+            self.clip_l.model = self.clip_l.model.cuda()
+            self.clip_g.model = self.clip_g.model.cuda()
             
         print("Models loaded.")
     
@@ -105,15 +112,14 @@ class SD35_Reconstructor(object):
         image_torch = torch.from_numpy(batch_images)
         image_torch = 2.0 * image_torch - 1.0
         image_torch = image_torch.cuda()
-        self.vae.model = self.vae.model.cuda()
-        latent = self.vae.model.encode(image_torch).cpu()
-        self.vae.model = self.vae.model.cpu()
+        latent = self.vae.model.encode(image_torch)
         return latent
     
     @torch.no_grad()
     def reconstruct(self,
                     image=None, 
                     c_t=None, 
+                    t5=None,
                     n_samples=1, 
                     strength=1.0, 
                     seed=None,
@@ -139,7 +145,7 @@ class SD35_Reconstructor(object):
             sampled_latent = self.do_sampling(
                 latent,
                 seed,
-                c_t,
+                (c_t.reshape((1,154,4096)).to(self.device, torch.float32), t5.reshape((1,2048)).to(self.device, torch.float32)), #these are actually flipped because I labeled them wrong (sorry)
                 neg_cond,
                 num_steps,
                 cfg,
@@ -204,7 +210,7 @@ class SD35_Reconstructor(object):
     ) -> torch.Tensor:
         self.print("Sampling...")
         latent = latent.half().cuda()
-        self.sd3.model = self.sd3.model.cuda()
+        # self.sd3.model = self.sd3.model.cuda()
         noise = self.get_noise(seed, latent).cuda()
         sigmas = self.get_sigmas(self.sd3.model.model_sampling, steps).cuda()
         sigmas = sigmas[int(steps * (1 - denoise)) :]
@@ -218,17 +224,17 @@ class SD35_Reconstructor(object):
             CFGDenoiser(self.sd3.model), noise_scaled, sigmas, extra_args=extra_args
         )
         latent = SD3LatentFormat().process_out(latent)
-        self.sd3.model = self.sd3.model.cpu()
+        # self.sd3.model = self.sd3.model.cpu()
         self.print("Sampling done")
         return latent
     
     def vae_decode(self, latent) -> Image.Image:
         self.print("Decoding latent to image...")
         latent = latent.cuda()
-        self.vae.model = self.vae.model.cuda()
+        # self.vae.model = self.vae.model.cuda()
         image = self.vae.model.decode(latent)
         image = image.float()
-        self.vae.model = self.vae.model.cpu()
+        # self.vae.model = self.vae.model.cpu()
         image = torch.clamp((image + 1.0) / 2.0, min=0.0, max=1.0)[0]
         decoded_np = 255.0 * np.moveaxis(image.cpu().numpy(), 0, 2)
         decoded_np = decoded_np.astype(np.uint8)
