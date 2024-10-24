@@ -173,4 +173,4 @@ src/tables/
 dataset
 .gitignore
 cache
-
+figs/

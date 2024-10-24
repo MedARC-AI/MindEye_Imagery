@@ -6,7 +6,7 @@ export CUDA_VISIBLE_DEVICES="0"
 
 subj=1 
 
-for model_name in "braindiffuser_subj01" "mindeye1_subj01" "final_subj01_pretrained_40sess_24bs" "pretrained_subj01_40sess_hypatia_vd2" "pretrained_subj01_40sess_hypatia_vd_dual_proj_avg" "subj01_40sess_hypatia_turbo_ridge_flat3" "subj01_40sess_hypatia_ridge_flat_dp5" "subj01_40sess_hypatia_ridge_rank_order_rois_13, subj01_40sess_hypatia_ridge_sc_flux_enhanced"; do
+for model_name in "subj03_40sess_hypatia_nsd_general" "subj06_40sess_hypatia_nsd_general" ; do
     echo model_name=${model_name}
 
     for mode in "vision" "imagery"; do
@@ -18,7 +18,6 @@ for model_name in "braindiffuser_subj01" "mindeye1_subj01" "final_subj01_pretrai
                 --mode $mode \
                 --data_path ../dataset \
                 --cache_dir ../cache
-                # --no-blurry_recon
 
         python plots_across_subjects.py \
                 --model_name="${model_name}" \
@@ -32,17 +31,17 @@ for model_name in "braindiffuser_subj01" "mindeye1_subj01" "final_subj01_pretrai
         done
     done
 
-python plots_across_methods.py \
-    --methods "mindeye1_subj01, \
-    braindiffuser_subj01, \
-    final_subj01_pretrained_40sess_24bs, \
-    pretrained_subj01_40sess_hypatia_vd2, \
-    pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-    subj01_40sess_hypatia_turbo_ridge_flat3, \
-    subj01_40sess_hypatia_ridge_flat_dp5, \
-    subj01_40sess_hypatia_ridge_rank_order_rois_13, \
-    subj01_40sess_hypatia_ridge_sc3,
-    subj01_40sess_hypatia_ridge_sc_flux_enhanced" \
-    --data_path ../dataset \
-    --output_path ../figs/ \
-    --output_file methods_scatter_reduced3
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj01, \
+#     braindiffuser_subj01, \
+#     final_subj01_pretrained_40sess_24bs, \
+#     pretrained_subj01_40sess_hypatia_vd2, \
+#     pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
+#     subj01_40sess_hypatia_turbo_ridge_flat3, \
+#     subj01_40sess_hypatia_ridge_flat_dp5, \
+#     subj01_40sess_hypatia_ridge_rank_order_rois_13, \
+#     subj01_40sess_hypatia_ridge_sc3,
+#     subj01_40sess_hypatia_ridge_sc_flux_enhanced" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --output_file methods_scatter_reduced3
