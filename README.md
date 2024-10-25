@@ -1,4 +1,8 @@
-# MindEye2
+# MindEye Imagery
+
+This branch (ME2_backbone_VD) uses the MindEye2 backbone paired with Reese's new portable Versatile Diffusion installation to produce reconstructions.
+
+This new VD installation appears to perform much worse when paired with the ME2 backbone (although it does great for ridge regression), we have no idea why this is, but if you want to use the ME2 backbone with the ME1 implementation of versatile diffusion (which works better with MLP backbones), see the other branch titled ME2_backbone_VD_old.
 
 ## Installation
 
