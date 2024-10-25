@@ -1,4 +1,33 @@
-# MindEye2
+# MindEye Imagery
+
+This branch uses two diffusion models to produce a more "refined" output. This uses Stable Cascade as the first model with image and low level guidance, and then can use either flux or SD3.5 to refine the output in img2img mode using a decoded text vector. This is a WIP and it doesn't look like this helps all that much over just baseline Stable Cascade, but this area is underexplored. Both the t5 and latent vectors of this branch are very large, and so require a lot of CPU memory to train ridge models for.
+
+To install the proper environment, follow src/setup.sh.
+
+To use this branch, you must also clone the StableCascade repo from https://github.com/Stability-AI/StableCascade.git into your src directory, such that it is located at `MindEye_Imagery/src/StableCascade/
+
+The Stable Cascade models below need to be downloaded from [our project huggingface repo](https://huggingface.co/datasets/reesekneeland/mindeye_imagery/tree/main) and placed into your `cache_dir`
+
+effnet_encoder.safetensors
+previewer.safetensors
+stage_a.safetensors
+stage_b.safetensors
+stage_c.safetensors
+
+To use SD3.5, download the following pretrained models into your cache_dir
+
+https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/sd3.5_large.safetensors
+https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/text_encoders/clip_l.safetensors
+https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/text_encoders/clip_g.safetensors
+https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/text_encoders/t5xxl_fp16.safetensors
+
+To use Flux, you must pip install the following repo like so:
+
+`pip install git+https://github.com/black-forest-labs/flux.git#egg=flux[all]`
+
+The code will download the pretrained models for you into your `cache_dir`
+
+
 
 ## Installation
 

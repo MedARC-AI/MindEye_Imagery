@@ -1,7 +1,7 @@
 
-jupyter nbconvert Train_ridge_cascade_sd35.ipynb --to python
-jupyter nbconvert recon_inference_mi_ridge_cascade.ipynb --to python
-jupyter nbconvert enhanced_recon_inference_mi_ridge.ipynb --to python
+jupyter nbconvert Train.ipynb --to python
+jupyter nbconvert recon_inference_mi.ipynb --to python
+jupyter nbconvert enhanced_recon_inference_mi.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
@@ -16,25 +16,26 @@ subj=1
 model_name="subj01_40sess_hypatia_ridge_sc_sd35"
 echo model_name=${model_name}
 
-# python Train_ridge_cascade_sd35.py \
-#     --data_path=../dataset \
-#     --cache_dir=../cache \
-#     --model_name=${model_name} \
-#     --no-multi_subject \
-#     --subj=${subj} \
-#     --batch_size=${BATCH_SIZE} \
-#     --weight_decay=60000
+python Train.py \
+    --data_path=../dataset \
+    --cache_dir=../cache \
+    --model_name=${model_name} \
+    --no-multi_subject \
+    --subj=${subj} \
+    --batch_size=${BATCH_SIZE} \
+    --weight_decay=60000 \
+    --sd35
 
 for mode in "vision" "imagery"; do
 
-    # python recon_inference_mi_ridge_cascade.py \
-    #     --model_name $model_name \
-    #     --subj $subj \
-    #     --mode $mode \
-    #     --cache_dir ../cache \
-    #     --data_path ../dataset \
-    #     --save_raw \
-    #     --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/ 
+    python recon_inference_mi.py \
+        --model_name $model_name \
+        --subj $subj \
+        --mode $mode \
+        --cache_dir ../cache \
+        --data_path ../dataset \
+        --save_raw \
+        --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/ 
         
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
@@ -54,7 +55,7 @@ for mode in "vision" "imagery"; do
             --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
             --subjs=$subj
 
-    python enhanced_recon_inference_mi_ridge.py \
+    python enhanced_recon_inference_mi.py \
         --model_name $model_name \
         --subj $subj \
         --mode $mode \
