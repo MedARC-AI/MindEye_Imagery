@@ -7,6 +7,9 @@ This new VD installation appears to perform much worse when paired with the ME2 
 This branch requires no special environment, mostly just ME2 but with Reese's VD package installed from source:
 `pip install git+https://github.com/reesekneeland/Versatile-Diffusion.git`
 
+You will need to place the versatile diffusion model files from the following hugginface repo in your 'cache_dir':
+https://huggingface.co/shi-labs/versatile-diffusion/tree/main/pretrained_pth
+
 ## Installation
 
 1. Git clone this repository:
