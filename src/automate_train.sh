@@ -11,13 +11,13 @@ subj=1
 model_name="subj01_40sess_hypatia_ridge_flux"
 echo model_name=${model_name}
 
-python Train_flux.py \
-    --data_path=../dataset \
-    --cache_dir=../cache \
-    --model_name=${model_name} \
-    --no-multi_subject \
-    --subj=${subj} \
-    --weight_decay=60000
+# python Train_flux.py \
+#     --data_path=../dataset \
+#     --cache_dir=../cache \
+#     --model_name=${model_name} \
+#     --no-multi_subject \
+#     --subj=${subj} \
+#     --weight_decay=60000
 
 for mode in "vision" "imagery"; do
 
