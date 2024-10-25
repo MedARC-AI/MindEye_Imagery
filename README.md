@@ -1,4 +1,10 @@
-# MindEye2
+# MindEye Imagery
+
+This branch (ME2_backbone_VD_old) uses the ME2 backbone and the ME1 implementation of versatile diffusion to do reconstructions on NSD Imagery. This is the correct implementation to get the best possible VD recons out of these architecture elements, as the branch ME2_backbone_VD, which uses Reese's portable VD installation, do poorly on reconstructions when using the MLP for some reason.
+
+This branch requires the ME2 environment with diffusers=0.13.0, which is the version necessary to load the versatile diffusion modules.
+
+This branch is untested, you may experience issues or bugs.
 
 ## Installation
 
