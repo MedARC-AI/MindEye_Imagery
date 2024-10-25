@@ -73,7 +73,7 @@ class Flux_Reconstructor(object):
         return clip_text, t5_text 
     
     @torch.inference_mode()
-    def embed_latent(self, images, height=1024, width=1024):
+    def embed_latent(self, image, height=1024, width=1024):
         if isinstance(image, Image.Image):
             image = self.prep_transform(image)[None, ...]
         init_image = torch.nn.functional.interpolate(image, (height, width))
