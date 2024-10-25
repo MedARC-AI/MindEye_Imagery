@@ -1,4 +1,14 @@
-# MindEye Imagery (WIP)
+# MindEye Imagery
+
+This branch creates reconstructions using a ridge backbone and text/latent only recons with Stable Diffusion 3.5. It is a work in progress. Both the t5 and latent vectors of this branch are very large, and so require a lot of CPU memory to train ridge models for.
+
+This branch shouldn't need any special environment, but if you are having trouble refer to `src/setup.sh`
+
+To use SD3.5, download the following pretrained models into your `cache_dir`
+- https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/sd3.5_large.safetensors
+- https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/text_encoders/clip_l.safetensors
+- https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/text_encoders/clip_g.safetensors
+- https://huggingface.co/stabilityai/stable-diffusion-3.5-large/blob/main/text_encoders/t5xxl_fp16.safetensors
 
 ## Installation
 
