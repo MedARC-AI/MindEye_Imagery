@@ -117,7 +117,7 @@ class Flux_Reconstructor(object):
         )
         if strength < 1.0: # Prepare partially noised latents
             if latent is not None:
-                init_image = latent
+                init_image = latent.reshape((-1, 16, height // 8, width // 8)).to(self.device)
             elif image is not None:
                 if isinstance(image, Image.Image):
                     image = self.prep_transform(image)[None, ...]
@@ -137,39 +137,38 @@ class Flux_Reconstructor(object):
             t = timesteps[t_idx]
             timesteps = timesteps[t_idx:]
             x = t * x + (1.0 - t) * init_image.expand(n_samples, -1, -1, -1).to(x.dtype)
-        elif strength == 0.0:
-            return image
-        
+        if strength > 0.0:
+            
         # Prepare latents
-        bs, c, h, w = x.shape
-        img = rearrange(x, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
-        if bs == 1 and n_samples > 1:
-            img = repeat(img, "1 ... -> bs ...", bs=n_samples)
-        img_ids = torch.zeros(h // 2, w // 2, 3)
-        img_ids[..., 1] = img_ids[..., 1] + torch.arange(h // 2)[:, None]
-        img_ids[..., 2] = img_ids[..., 2] + torch.arange(w // 2)[None, :]
-        img_ids = repeat(img_ids, "h w c -> b (h w) c", b=n_samples)
-        
-        #Prepare guidance
-        t5 = t5.reshape((-1, 64, 4096)).expand(n_samples, -1, -1).to(torch.bfloat16)
-        c_t = c_t.reshape((-1, 768)).expand(n_samples, -1).to(torch.bfloat16)
-        t5_ids = torch.zeros(n_samples, t5.shape[1], 3)
-        inp = {
-            "img": img,
-            "img_ids": img_ids.to(img.device),
-            "txt": t5.to(img.device),
-            "txt_ids": t5_ids.to(img.device),
-            "vec": c_t.to(img.device),
-        }
-        if self.offload:
-            torch.cuda.empty_cache()
-            self.model = self.model.to(self.device)
-        x = denoise(self.model, **inp, timesteps=timesteps, guidance=cfg)
+            bs, c, h, w = x.shape
+            img = rearrange(x, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
+            if bs == 1 and n_samples > 1:
+                img = repeat(img, "1 ... -> bs ...", bs=n_samples)
+            img_ids = torch.zeros(h // 2, w // 2, 3)
+            img_ids[..., 1] = img_ids[..., 1] + torch.arange(h // 2)[:, None]
+            img_ids[..., 2] = img_ids[..., 2] + torch.arange(w // 2)[None, :]
+            img_ids = repeat(img_ids, "h w c -> b (h w) c", b=n_samples)
+            
+            #Prepare guidance
+            t5 = t5.reshape((-1, 64, 4096)).expand(n_samples, -1, -1).to(torch.bfloat16)
+            c_t = c_t.reshape((-1, 768)).expand(n_samples, -1).to(torch.bfloat16)
+            t5_ids = torch.zeros(n_samples, t5.shape[1], 3)
+            inp = {
+                "img": img,
+                "img_ids": img_ids.to(img.device),
+                "txt": t5.to(img.device),
+                "txt_ids": t5_ids.to(img.device),
+                "vec": c_t.to(img.device),
+            }
+            if self.offload:
+                torch.cuda.empty_cache()
+                self.model = self.model.to(self.device)
+            x = denoise(self.model, **inp, timesteps=timesteps, guidance=cfg)
+            x = unpack(x.float(), height, width)
         if self.offload:
             self.model.cpu()
             torch.cuda.empty_cache()
             self.ae.decoder.to(self.device)
-        x = unpack(x.float(), height, width)
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
             x = self.ae.decode(x)
         if self.offload:
