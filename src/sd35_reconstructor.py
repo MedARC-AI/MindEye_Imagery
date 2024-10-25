@@ -115,7 +115,7 @@ class SD35_Reconstructor(object):
                     width=1024):
         if strength < 1.0: # Prepare partially noised latents
             if latent is not None:
-                pass
+                latent = latent.reshape(1, 16, height//8, width//8)
             elif image is not None:
                 if isinstance(image, torch.Tensor):
                     image = transforms.ToPILImage()(image).resize((height,width))
@@ -126,10 +126,8 @@ class SD35_Reconstructor(object):
                 raise ValueError("Image or latent must be provided for strength < 1.0")
             latent = SD3LatentFormat().process_in(latent).expand(n_samples, -1, -1, -1)
             
-        elif strength > 0.0:
-            latent = self.get_empty_latent(width, height).expand(n_samples, -1, -1, -1)
         else:
-            latent = latent.reshape(1, 16, height//8, width//8).expand(n_samples, -1, -1, -1)
+            latent = self.get_empty_latent(width, height).expand(n_samples, -1, -1, -1)
             
         if int(strength * num_steps) > 0:
             neg_cond = self.embed_text("")
