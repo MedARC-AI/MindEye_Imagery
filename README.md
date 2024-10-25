@@ -1,5 +1,17 @@
 # MindEye Imagery (WIP)
 
+This is the main working branch of MindEye Imagery. It uses the Stable Cascade diffusion model for reconstructions, and a set of Ridge regression models as the decoding backbone. 
+
+To install the proper environment, follow `src/setup.sh`.
+
+The Stable Cascade models below need to be downloaded from our project huggingface repo (https://huggingface.co/datasets/reesekneeland/mindeye_imagery/tree/main) and placed into your `cache_dir`
+- effnet_encoder.safetensors
+- previewer.safetensors
+- stage_a.safetensors
+- stage_b.safetensors
+- stage_c.safetensors
+
+
 ## Installation
 
 1. Git clone this repository:
