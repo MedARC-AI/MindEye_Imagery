@@ -1,4 +1,10 @@
-# MindEye2
+# MindEye Imagery
+
+This is a branch to do ridge regression only recons using Reese's portable versatile diffusion installation and AutoencoderKL. This works pretty much as well as Brain Diffuser (because its almost identical), but with a different (and slightly worse) low level module.
+
+This branch requires no special environment, mostly just ME2 but with Reese's VD package installed from source: pip install git+https://github.com/reesekneeland/Versatile-Diffusion.git
+
+You will need to place the versatile diffusion model files from the following hugginface repo in your 'cache_dir': https://huggingface.co/shi-labs/versatile-diffusion/tree/main/pretrained_pth
 
 ## Installation
 
