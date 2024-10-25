@@ -4,6 +4,9 @@ This branch (ME2_backbone_VD) uses the MindEye2 backbone paired with Reese's new
 
 This new VD installation appears to perform much worse when paired with the ME2 backbone (although it does great for ridge regression), we have no idea why this is, but if you want to use the ME2 backbone with the ME1 implementation of versatile diffusion (which works better with MLP backbones), see the other branch titled ME2_backbone_VD_old.
 
+This branch requires no special environment, mostly just ME2 but with Reese's VD package installed from source:
+`pip install git+https://github.com/reesekneeland/Versatile-Diffusion.git`
+
 ## Installation
 
 1. Git clone this repository:
