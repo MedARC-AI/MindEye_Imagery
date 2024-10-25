@@ -1,17 +1,17 @@
-jupyter nbconvert Train.ipynb --to python
-jupyter nbconvert recon_inference_mi.ipynb --to python
+jupyter nbconvert Train_flux.ipynb --to python
+jupyter nbconvert recon_inference_mi_flux.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
-export CUDA_VISIBLE_DEVICES="1"
+export CUDA_VISIBLE_DEVICES="0"
 
 subj=1 
 
-model_name="subj01_40sess_hypatia_ridge_sd35"
+model_name="subj01_40sess_hypatia_ridge_flux"
 echo model_name=${model_name}
 
-python Train.py \
+python Train_flux.py \
     --data_path=../dataset \
     --cache_dir=../cache \
     --model_name=${model_name} \
@@ -21,7 +21,7 @@ python Train.py \
 
 for mode in "vision" "imagery"; do
 
-    python recon_inference_mi.py \
+    python recon_inference_mi_flux.py \
         --model_name $model_name \
         --subj $subj \
         --mode $mode \
