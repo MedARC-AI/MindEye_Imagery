@@ -11,13 +11,13 @@ subj=1
 model_name="subj01_40sess_hypatia_ridge_sd35"
 echo model_name=${model_name}
 
-python Train.py \
-    --data_path=../dataset \
-    --cache_dir=../cache \
-    --model_name=${model_name} \
-    --no-multi_subject \
-    --subj=${subj} \
-    --weight_decay=60000
+# python Train.py \
+#     --data_path=../dataset \
+#     --cache_dir=../cache \
+#     --model_name=${model_name} \
+#     --no-multi_subject \
+#     --subj=${subj} \
+#     --weight_decay=60000
 
 for mode in "vision" "imagery"; do
 

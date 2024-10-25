@@ -124,12 +124,12 @@ class SD35_Reconstructor(object):
                 latent = self.embed_latent(image)
             else:
                 raise ValueError("Image or latent must be provided for strength < 1.0")
-            latent = SD3LatentFormat().process_in(latent)#.expand(n_samples, -1, -1, -1)
+            latent = SD3LatentFormat().process_in(latent).expand(n_samples, -1, -1, -1)
             
         elif strength > 0.0:
-            latent = self.get_empty_latent(width, height)#.expand(n_samples, -1, -1, -1)
+            latent = self.get_empty_latent(width, height).expand(n_samples, -1, -1, -1)
         else:
-            latent = latent#.expand(n_samples, -1, -1, -1)
+            latent = latent.reshape(1, 16, height//8, width//8).expand(n_samples, -1, -1, -1)
             
         if int(strength * num_steps) > 0:
             neg_cond = self.embed_text("")
@@ -137,8 +137,8 @@ class SD35_Reconstructor(object):
                 seed = torch.randint(0, 100000, (1,)).item()
             sampled_latent = self.do_sampling(
                 latent,
-                seed, #.expand(n_samples, -1, -1) .expand(n_samples, -1)
-                (c_t.reshape((1,154,4096)).to(self.device, torch.float32), t5.reshape((1,2048)).to(self.device, torch.float32)), #these are actually flipped because I labeled them wrong (sorry)
+                seed, # 
+                (c_t.reshape((1,154,4096)).expand(n_samples, -1, -1).to(self.device, torch.float32), t5.reshape((1,2048)).expand(n_samples, -1).to(self.device, torch.float32)), #these are actually flipped because I labeled them wrong (sorry)
                 neg_cond,
                 num_steps,
                 cfg,
@@ -146,7 +146,7 @@ class SD35_Reconstructor(object):
                 strength,
             )
         else:
-            sampled_latent = latent
+            sampled_latent = latent.to(torch.float16)
             
         image = self.vae_decode(sampled_latent)
         
