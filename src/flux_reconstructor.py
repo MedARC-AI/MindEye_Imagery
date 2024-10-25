@@ -148,22 +148,22 @@ class Flux_Reconstructor(object):
             img_ids[..., 1] = img_ids[..., 1] + torch.arange(h // 2)[:, None]
             img_ids[..., 2] = img_ids[..., 2] + torch.arange(w // 2)[None, :]
             img_ids = repeat(img_ids, "h w c -> b (h w) c", b=n_samples)
-            
-            #Prepare guidance
-            t5 = t5.reshape((-1, 64, 4096)).expand(n_samples, -1, -1).to(torch.bfloat16)
-            c_t = c_t.reshape((-1, 768)).expand(n_samples, -1).to(torch.bfloat16)
-            t5_ids = torch.zeros(n_samples, t5.shape[1], 3)
-            inp = {
-                "img": img,
-                "img_ids": img_ids.to(img.device),
-                "txt": t5.to(img.device),
-                "txt_ids": t5_ids.to(img.device),
-                "vec": c_t.to(img.device),
-            }
-            if self.offload:
-                torch.cuda.empty_cache()
-                self.model = self.model.to(self.device)
-            x = denoise(self.model, **inp, timesteps=timesteps, guidance=cfg)
+            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+                #Prepare guidance
+                t5 = t5.reshape((-1, 64, 4096)).expand(n_samples, -1, -1).to(torch.bfloat16)
+                c_t = c_t.reshape((-1, 768)).expand(n_samples, -1).to(torch.bfloat16)
+                t5_ids = torch.zeros(n_samples, t5.shape[1], 3)
+                inp = {
+                    "img": img,
+                    "img_ids": img_ids.to(img.device),
+                    "txt": t5.to(img.device),
+                    "txt_ids": t5_ids.to(img.device),
+                    "vec": c_t.to(img.device),
+                }
+                if self.offload:
+                    torch.cuda.empty_cache()
+                    self.model = self.model.to(self.device)
+                x = denoise(self.model, **inp, timesteps=timesteps, guidance=cfg)
             x = unpack(x.float(), height, width)
         if self.offload:
             self.model.cpu()
