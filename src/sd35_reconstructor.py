@@ -115,7 +115,7 @@ class SD35_Reconstructor(object):
                     width=1024):
         if strength < 1.0: # Prepare partially noised latents
             if latent is not None:
-                latent = latent.reshape(1, 16, height//8, width//8)
+                latent = latent.reshape(1, 16, height//8, width//8).to(torch.float32)
             elif image is not None:
                 if isinstance(image, torch.Tensor):
                     image = transforms.ToPILImage()(image).resize((height,width))
@@ -134,7 +134,7 @@ class SD35_Reconstructor(object):
             if seed==None:
                 seed = torch.randint(0, 100000, (1,)).item()
             sampled_latent = self.do_sampling(
-                latent,
+                latent.to(torch.float32),
                 seed, # 
                 (c_t.reshape((1,154,4096)).expand(n_samples, -1, -1).to(self.device, torch.float32), t5.reshape((1,2048)).expand(n_samples, -1).to(self.device, torch.float32)), #these are actually flipped because I labeled them wrong (sorry)
                 neg_cond,
