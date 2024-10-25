@@ -5,8 +5,8 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 export CUDA_VISIBLE_DEVICES="0"
 
 subj=1 
-
-for model_name in "subj01_40sess_hypatia_nsd_general" "final_subj01_pretrained_40sess_24bs"; do
+for num_rois in {10..30}; do 
+    model_name="subj0${subj}40sess_hypatia_sc_ridge_rank_order_rois_samplewise${num_rois}"
     echo model_name=${model_name}
 
     for mode in "vision" "imagery"; do
