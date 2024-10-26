@@ -4,7 +4,7 @@ jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
-export CUDA_VISIBLE_DEVICES="0"
+export CUDA_VISIBLE_DEVICES="1"
 
 subj=1 
 
@@ -56,12 +56,13 @@ python plots_across_methods.py \
     final_subj01_pretrained_40sess_24bs, \
     pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
     subj01_40sess_hypatia_turbo_ridge_flat3, \
-    subj01_40sess_hypatia_ridge_sc3,
-    subj01_40sess_hypatia_ridge_sc_flux,
-    subj01_40sess_hypatia_ridge_sc_flux_enhanced,
-    subj01_40sess_hypatia_ridge_sc_sd35,
-    subj01_40sess_hypatia_ridge_sc_sd35_enhanced,
-    subj01_40sess_hypatia_ridge_sd35" \
+    subj01_40sess_hypatia_ridge_sc3, \
+    subj01_40sess_hypatia_ridge_sc_flux, \
+    subj01_40sess_hypatia_ridge_sc_flux_enhanced, \
+    subj01_40sess_hypatia_ridge_sc_sd35, \
+    subj01_40sess_hypatia_ridge_sc_sd35_enhanced, \
+    subj01_40sess_hypatia_ridge_flux, \
+    subj01_40sess_hypatia_ridge_sd35_no_blurry" \
     --data_path ../dataset \
     --output_path ../figs/ \
     --output_file methods_scatter_reduced4
