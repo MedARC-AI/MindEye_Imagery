@@ -478,40 +478,56 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 
 
 
+# python plots_across_methods.py \
+# --methods "braindiffuser_subj01, \
+# subj01_40sess_hypatia_nsd_general, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_1, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_2, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_3, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_4, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_5, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_6, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_7, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_8, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_9, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_10, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_11, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_12, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_13, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_14, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_15, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_16, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_17, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_18, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_19, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_20, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_21, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_22, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_23, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_24, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_25, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_26, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_27, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_28, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_29, \
+# subj01_40sess_hypatia_ridge_rank_order_rois_30" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_comparison_roi_threshold_s1_vd \
+# --gradient
+
 python plots_across_methods.py \
---methods "braindiffuser_subj01, \
-subj01_40sess_hypatia_nsd_general, \
-subj01_40sess_hypatia_ridge_rank_order_rois_1, \
-subj01_40sess_hypatia_ridge_rank_order_rois_2, \
-subj01_40sess_hypatia_ridge_rank_order_rois_3, \
-subj01_40sess_hypatia_ridge_rank_order_rois_4, \
-subj01_40sess_hypatia_ridge_rank_order_rois_5, \
-subj01_40sess_hypatia_ridge_rank_order_rois_6, \
-subj01_40sess_hypatia_ridge_rank_order_rois_7, \
-subj01_40sess_hypatia_ridge_rank_order_rois_8, \
-subj01_40sess_hypatia_ridge_rank_order_rois_9, \
-subj01_40sess_hypatia_ridge_rank_order_rois_10, \
-subj01_40sess_hypatia_ridge_rank_order_rois_11, \
-subj01_40sess_hypatia_ridge_rank_order_rois_12, \
-subj01_40sess_hypatia_ridge_rank_order_rois_13, \
-subj01_40sess_hypatia_ridge_rank_order_rois_14, \
-subj01_40sess_hypatia_ridge_rank_order_rois_15, \
-subj01_40sess_hypatia_ridge_rank_order_rois_16, \
-subj01_40sess_hypatia_ridge_rank_order_rois_17, \
-subj01_40sess_hypatia_ridge_rank_order_rois_18, \
-subj01_40sess_hypatia_ridge_rank_order_rois_19, \
-subj01_40sess_hypatia_ridge_rank_order_rois_20, \
-subj01_40sess_hypatia_ridge_rank_order_rois_21, \
-subj01_40sess_hypatia_ridge_rank_order_rois_22, \
-subj01_40sess_hypatia_ridge_rank_order_rois_23, \
-subj01_40sess_hypatia_ridge_rank_order_rois_24, \
-subj01_40sess_hypatia_ridge_rank_order_rois_25, \
-subj01_40sess_hypatia_ridge_rank_order_rois_26, \
-subj01_40sess_hypatia_ridge_rank_order_rois_27, \
-subj01_40sess_hypatia_ridge_rank_order_rois_28, \
-subj01_40sess_hypatia_ridge_rank_order_rois_29, \
-subj01_40sess_hypatia_ridge_rank_order_rois_30" \
---data_path ../dataset \
---output_path ../figs/ \
---output_file methods_comparison_roi_threshold_s1_vd \
---gradient
+    --methods "mindeye1_subj01, \
+    braindiffuser_subj01, \
+    final_subj01_pretrained_40sess_24bs, \
+    pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
+    subj01_40sess_hypatia_turbo_ridge_flat3, \
+    subj01_40sess_hypatia_ridge_sc3,
+    subj01_40sess_hypatia_ridge_sc_flux,
+    subj01_40sess_hypatia_ridge_sc_flux_enhanced,
+    subj01_40sess_hypatia_ridge_sc_sd35,
+    subj01_40sess_hypatia_ridge_sc_sd35_enhanced,
+    subj01_40sess_hypatia_ridge_sd35_no_blurry" \
+    --data_path ../dataset \
+    --output_path ../figs/ \
+    --output_file methods_scatter_reduced4

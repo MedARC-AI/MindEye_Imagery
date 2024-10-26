@@ -44,7 +44,7 @@ subj=1
 
 #     done
 
-for strength in 0.65 0.70 0.80; do
+for strength in 0.60; do # 0.70 0.80
 
     model_name="subj01_40sess_hypatia_ridge_sc_${strength}_strength"
     echo model_name=${model_name}
