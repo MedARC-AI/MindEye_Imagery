@@ -19,7 +19,7 @@ echo model_name=${model_name}
 #     --subj=${subj} \
 #     --weight_decay=60000
 
-for mode in "vision" "imagery"; do
+for mode in "imagery" "vision"; do
 
     python recon_inference_mi_flux.py \
         --model_name $model_name \
