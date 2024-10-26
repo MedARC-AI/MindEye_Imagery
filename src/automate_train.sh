@@ -8,7 +8,7 @@ export CUDA_VISIBLE_DEVICES="1"
 
 subj=1 
 
-model_name="subj01_40sess_hypatia_ridge_sd35"
+model_name="subj01_40sess_hypatia_ridge_sd35_no_blurry"
 echo model_name=${model_name}
 
 # python Train.py \
@@ -29,7 +29,7 @@ for mode in "vision" "imagery"; do
         --data_path ../dataset \
         --save_raw \
         --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/ \
-        --dual_guidance
+        --no-blurry_recon
         
     python final_evaluations_mi_multi.py \
             --model_name $model_name \
