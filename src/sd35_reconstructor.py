@@ -196,7 +196,7 @@ class SD35_Reconstructor(object):
     
     def vae_decode(self, latent) -> Image.Image:
         self.print("Decoding latent to image...")
-        latent = latent.to(device)
+        latent = latent.to(self.device)
         # self.vae.model = self.vae.model.cuda()
         image = self.vae.model.decode(latent)
         image = image.float()
