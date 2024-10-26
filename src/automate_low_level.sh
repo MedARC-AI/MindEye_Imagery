@@ -93,8 +93,8 @@ python plots_across_methods.py \
     subj01_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_30,
     subj01_40sess_hypatia_ridge_sc_short_captions,
     subj01_40sess_hypatia_ridge_sc_vdvae,
-    subj01_40sess_hypatia_ridge_sc_0.65_strength
-    subj01_40sess_hypatia_ridge_sc_0.70_strength
+    subj01_40sess_hypatia_ridge_sc_0.65_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength, \
     subj01_40sess_hypatia_ridge_sc_0.80_strength" \
     --data_path ../dataset \
     --output_path ../figs/ \
