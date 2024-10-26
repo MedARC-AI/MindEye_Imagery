@@ -20,7 +20,6 @@ class SD35_Reconstructor(object):
         print(f"Stable Diffusion 3.5 Reconstructor: Loading model...")
         self.device = torch.device(device)
         self.cache_dir = cache_dir
-        self.dtype = torch.bfloat16
         self.verbose=False
         self.tokenizer = SD3Tokenizer()
         print("Loading OpenAI CLIP L...")
@@ -44,31 +43,6 @@ class SD35_Reconstructor(object):
             self.clip_g.model = self.clip_g.model.cuda()
             
         print("Models loaded.")
-    
-    # @torch.no_grad()
-    # def embed_text(self, text):
-    #     if isinstance(text, list):
-    #         tokens = {"l" : [], "g" : [], "t5xxl" : []}
-    #         for t in text:
-    #             s_tokens = self.tokenizer.tokenize_with_weights(t)
-    #             tokens["l"].append(list(map(lambda a: a[0], s_tokens["l"][0])))
-    #             tokens["g"].append(list(map(lambda a: a[0], s_tokens["g"][0])))
-    #             tokens["t5xxl"].append(list(map(lambda a: a[0], s_tokens["t5xxl"][0])))
-    #     else:
-    #         tokens = self.tokenizer.tokenize_with_weights(text)
-    #     l_out, l_pooled = self.clip_l.model.encode_token_weights(tokens["l"])
-    #     start = time.time()
-    #     g_out, g_pooled = self.clip_g.model.encode_token_weights(tokens["g"])
-    #     print(f"CLIP G took {time.time() - start} seconds")
-    #     start = time.time()
-    #     print("token length t5 ", len(tokens["t5xxl"][0]))
-    #     t5_out, t5_pooled = self.t5xxl.model.encode_token_weights(tokens["t5xxl"])
-    #     print(f"T5 took {time.time() - start} seconds")
-    #     lg_out = torch.cat([l_out, g_out], dim=-1)
-    #     lg_out = torch.nn.functional.pad(lg_out, (0, 4096 - lg_out.shape[-1]))
-    #     return torch.cat([lg_out, t5_out], dim=-2), torch.cat(
-    #         (l_pooled, g_pooled), dim=-1
-    #     )
     
     @torch.no_grad()
     def embed_text(self, text):
@@ -121,22 +95,23 @@ class SD35_Reconstructor(object):
                     image = transforms.ToPILImage()(image).resize((height,width))
                 elif isinstance(image, PIL.Image.Image):
                     image = image.resize((width, height), Image.LANCZOS)
-                latent = self.embed_latent(image)
+                latent = self.embed_latent(image).to(torch.float32)
             else:
                 raise ValueError("Image or latent must be provided for strength < 1.0")
-            latent = SD3LatentFormat().process_in(latent).expand(n_samples, -1, -1, -1)
+            latent = SD3LatentFormat().process_in(latent)#.expand(n_samples, -1, -1, -1)
             
         else:
-            latent = self.get_empty_latent(width, height).expand(n_samples, -1, -1, -1)
+            latent = self.get_empty_latent(width, height)#.expand(n_samples, -1, -1, -1)
             
         if int(strength * num_steps) > 0:
-            neg_cond = self.embed_text("")
+            neg_cond = self.embed_text("") #.expand(n_samples, -1, -1) .expand(n_samples, -1)
+            cond = (c_t.reshape((1,154,4096)).to(self.device, torch.float32), t5.reshape((1,2048)).to(self.device, torch.float32)) #these are actually flipped because I labeled them wrong (sorry)
             if seed==None:
                 seed = torch.randint(0, 100000, (1,)).item()
             sampled_latent = self.do_sampling(
-                latent.to(torch.float32),
+                latent,
                 seed, # 
-                (c_t.reshape((1,154,4096)).expand(n_samples, -1, -1).to(self.device, torch.float32), t5.reshape((1,2048)).expand(n_samples, -1).to(self.device, torch.float32)), #these are actually flipped because I labeled them wrong (sorry)
+                cond,
                 neg_cond,
                 num_steps,
                 cfg,
@@ -221,7 +196,7 @@ class SD35_Reconstructor(object):
     
     def vae_decode(self, latent) -> Image.Image:
         self.print("Decoding latent to image...")
-        latent = latent.cuda()
+        latent = latent.to(device)
         # self.vae.model = self.vae.model.cuda()
         image = self.vae.model.decode(latent)
         image = image.float()

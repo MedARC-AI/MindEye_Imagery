@@ -2446,10 +2446,10 @@ CLIPG_CONFIG = {
 
 
 class ClipG:
-    def __init__(self, path, device="cpu"):
-        with safe_open(f"{path}/clip_g.safetensors", framework="pt", device=device) as f:
-            self.model = SDXLClipG(CLIPG_CONFIG, device=device, dtype=torch.float32)
-            load_into(f, self.model.transformer, "", device, torch.float32)
+    def __init__(self, path):
+        with safe_open(f"{path}/clip_g.safetensors", framework="pt", device="cpu") as f:
+            self.model = SDXLClipG(CLIPG_CONFIG, device="cpu", dtype=torch.float32)
+            load_into(f, self.model.transformer, "", "cpu", torch.float32)
 
 
 CLIPL_CONFIG = {
@@ -2462,18 +2462,18 @@ CLIPL_CONFIG = {
 
 
 class ClipL:
-    def __init__(self, path, device="cpu"):
-        with safe_open(f"{path}/clip_l.safetensors", framework="pt", device=device) as f:
+    def __init__(self, path):
+        with safe_open(f"{path}/clip_l.safetensors", framework="pt", device="cpu") as f:
             self.model = SDClipModel(
                 layer="hidden",
                 layer_idx=-2,
-                device=device,
+                device="cpu",
                 dtype=torch.float32,
                 layer_norm_hidden_state=False,
                 return_projected_pooled=False,
                 textmodel_json_config=CLIPL_CONFIG,
             )
-            load_into(f, self.model.transformer, "", device, torch.float32)
+            load_into(f, self.model.transformer, "", "cpu", torch.float32)
 
 
 T5_CONFIG = {
@@ -2486,32 +2486,32 @@ T5_CONFIG = {
 
 
 class T5XXL:
-    def __init__(self, path, device="cpu"):
-        with safe_open(f"{path}/t5xxl_fp16.safetensors", framework="pt", device=device) as f:
-            self.model = T5XXLModel(T5_CONFIG, device=device, dtype=torch.float32)
-            load_into(f, self.model.transformer, "", device, torch.float32)
+    def __init__(self, path):
+        with safe_open(f"{path}/t5xxl_fp16.safetensors", framework="pt", device="cpu") as f:
+            self.model = T5XXLModel(T5_CONFIG, device="cpu", dtype=torch.float32)
+            load_into(f, self.model.transformer, "", "cpu", torch.float32)
 
 
 class SD3:
-    def __init__(self, model, shift, verbose=False, device="cpu"):
-        with safe_open(model, framework="pt", device=device) as f:
+    def __init__(self, model, shift, verbose=False):
+        with safe_open(model, framework="pt", device="cpu") as f:
             self.model = BaseModel(
                 shift=shift,
                 file=f,
                 prefix="model.diffusion_model.",
-                device=device,
+                device="cpu",
                 dtype=torch.float16,
                 verbose=verbose,
             ).eval()
-            load_into(f, self.model, "model.", device, torch.float16)
+            load_into(f, self.model, "model.", "cpu", torch.float16)
 
 
 class VAE:
-    def __init__(self, model, device="cpu"):
-        with safe_open(model, framework="pt", device=device) as f:
-            self.model = SDVAE(device=device, dtype=torch.float16).eval().cpu()
+    def __init__(self, model):
+        with safe_open(model, framework="pt", device="cpu") as f:
+            self.model = SDVAE(device="cpu", dtype=torch.float16).eval().cpu()
             prefix = ""
             if any(k.startswith("first_stage_model.") for k in f.keys()):
                 prefix = "first_stage_model."
-            load_into(f, self.model, prefix, device, torch.float16)
+            load_into(f, self.model, prefix, "cpu", torch.float16)
 
