@@ -52,51 +52,51 @@ subj=1
 
 #     done
 
-model_name="subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_sharpness_color"
-echo model_name=${model_name}
+# model_name="subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_sharpness_color"
+# echo model_name=${model_name}
 
-# python Train.py \
-#             --data_path=../dataset \
-#             --cache_dir=../cache \
-#             --model_name=${model_name} \
-#             --no-multi_subject \
-#             --subj=${subj} \
-#             --dual_guidance
+# # python Train.py \
+# #             --data_path=../dataset \
+# #             --cache_dir=../cache \
+# #             --model_name=${model_name} \
+# #             --no-multi_subject \
+# #             --subj=${subj} \
+# #             --dual_guidance
 
-for mode in "vision" "imagery"; do #
+# for mode in "vision" "imagery"; do #
 
-    python recon_inference_mi.py \
-        --model_name $model_name \
-        --subj $subj \
-        --mode $mode \
-        --cache_dir ../cache \
-        --data_path ../dataset \
-        --save_raw \
-        --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/ \
-        --dual_guidance \
-        --vdvae \
-        --strength 0.70 \
-        --filter_sharpness \
-        --filter_color
+#     python recon_inference_mi.py \
+#         --model_name $model_name \
+#         --subj $subj \
+#         --mode $mode \
+#         --cache_dir ../cache \
+#         --data_path ../dataset \
+#         --save_raw \
+#         --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/ \
+#         --dual_guidance \
+#         --vdvae \
+#         --strength 0.70 \
+#         --filter_sharpness \
+#         --filter_color
         
-    python final_evaluations_mi_multi.py \
-            --model_name $model_name \
-            --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
-            --subj $subj \
-            --mode $mode \
-            --data_path ../dataset \
-            --cache_dir ../cache
+#     python final_evaluations_mi_multi.py \
+#             --model_name $model_name \
+#             --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
+#             --subj $subj \
+#             --mode $mode \
+#             --data_path ../dataset \
+#             --cache_dir ../cache
 
-    python plots_across_subjects.py \
-            --model_name="${model_name}" \
-            --mode="${mode}" \
-            --data_path ../dataset \
-            --cache_dir ../cache \
-            --criteria all \
-            --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
-            --subjs=$subj
+#     python plots_across_subjects.py \
+#             --model_name="${model_name}" \
+#             --mode="${mode}" \
+#             --data_path ../dataset \
+#             --cache_dir ../cache \
+#             --criteria all \
+#             --all_recons_path evals/${model_name}/${model_name}_all_recons_${mode}.pt \
+#             --subjs=$subj
 
-    done
+#     done
 
 # model_name="subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_contrast_sharpness"
 # echo model_name=${model_name}
@@ -194,13 +194,13 @@ for mode in "vision" "imagery"; do #
 model_name="subj01_40sess_hypatia_ridge_sc_0.70_strength_contrast"
 echo model_name=${model_name}
 
-python Train.py \
-            --data_path=../dataset \
-            --cache_dir=../cache \
-            --model_name=${model_name} \
-            --no-multi_subject \
-            --subj=${subj} \
-            --dual_guidance
+# python Train.py \
+#             --data_path=../dataset \
+#             --cache_dir=../cache \
+#             --model_name=${model_name} \
+#             --no-multi_subject \
+#             --subj=${subj} \
+#             --dual_guidance
 
 for mode in "vision" "imagery"; do #
 
@@ -238,13 +238,13 @@ for mode in "vision" "imagery"; do #
 model_name="subj01_40sess_hypatia_ridge_sc_0.70_strength_contrast_sharpness"
 echo model_name=${model_name}
 
-python Train.py \
-            --data_path=../dataset \
-            --cache_dir=../cache \
-            --model_name=${model_name} \
-            --no-multi_subject \
-            --subj=${subj} \
-            --dual_guidance
+# python Train.py \
+#             --data_path=../dataset \
+#             --cache_dir=../cache \
+#             --model_name=${model_name} \
+#             --no-multi_subject \
+#             --subj=${subj} \
+#             --dual_guidance
 
 for mode in "vision" "imagery"; do #
 
