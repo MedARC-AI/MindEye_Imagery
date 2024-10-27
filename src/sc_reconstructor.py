@@ -122,12 +122,7 @@ class SC_Reconstructor(object):
             if latent is not None:
                 effnet_latents = latent.reshape((-1, 16, 24, 24)).expand(n_samples, -1, -1, -1).to(self.device, self.dtype)
             elif image is not None:
-                if isinstance(image, torch.Tensor):
-                    image = transforms.ToPILImage()(image).resize((512,512))
-                images = resize_image(image).unsqueeze(0).expand(n_samples, -1, -1, -1).to(self.device)
-                latent_batch = {'images': images}
-                
-                effnet_latents = self.core.encode_latents(latent_batch, self.models, self.extras)
+                effnet_latents = self.embed_latent(image).expand(n_samples, -1, -1, -1).to(self.device, self.dtype)
             else:
                 raise ValueError("Image must be provided for strength < 1.0")
             t = torch.ones(effnet_latents.size(0), device=self.device) * strength

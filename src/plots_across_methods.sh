@@ -516,18 +516,208 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 # --output_file methods_comparison_roi_threshold_s1_vd \
 # --gradient
 
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj01, \
+#     braindiffuser_subj01, \
+#     final_subj01_pretrained_40sess_24bs, \
+#     pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
+#     subj01_40sess_hypatia_turbo_ridge_flat3, \
+#     subj01_40sess_hypatia_ridge_sc3, \
+#     subj01_40sess_hypatia_ridge_flux, \
+#     subj01_40sess_hypatia_ridge_sd35_no_blurry, \
+#     subj01_40sess_hypatia_ridge_sc_flux_enhanced, \
+#     subj01_40sess_hypatia_ridge_sc_sd35_enhanced, \
+#     subj01_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_30,
+#     subj01_40sess_hypatia_ridge_sc_short_captions" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --output_file methods_scatter_reduced4
+
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj01, \
+#     braindiffuser_subj01, \
+#     subj01_40sess_hypatia_ridge_sc3, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae, \
+#     subj01_40sess_hypatia_ridge_sc_0.60_strength, \
+#     subj01_40sess_hypatia_ridge_sc_0.65_strength, \
+#     subj01_40sess_hypatia_ridge_sc_0.70_strength, \
+#     subj01_40sess_hypatia_ridge_sc_0.80_strength" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --output_file methods_scatter_reduced6
+
+# python plots_across_methods.py \
+# --methods "subj05_40sess_hypatia_sc_nsd_general, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_15, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_16, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_17, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_18, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_19, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_20, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_21, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_22, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_23, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_25, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_26, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_27, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_28, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_29, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_30, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_31, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_32, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_33, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_34, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_35, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_36, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_37, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_38, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_39, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_40, \
+# subj05_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_41" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_comparison_roi_threshold_s5_samplewise_sc \
+# --gradient
+
+# python plots_across_methods.py \
+# --methods "subj04_40sess_hypatia_sc_nsd_general, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_1, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_2, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_3, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_4, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_5, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_6, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_7, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_8, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_9, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_10, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_11, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_12, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_13, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_14, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_15, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_16, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_17, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_18, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_19, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_20, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_21, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_22, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_23, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_24, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_25, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_26, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_27, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_28, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_29, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_30" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_comparison_roi_threshold_s4_samplewise_sc \
+# --gradient
+
+# python plots_across_methods.py \
+# --methods "subj08_40sess_hypatia_sc_nsd_general, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_1, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_2, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_3, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_4, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_5, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_6, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_7, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_8, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_9, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_10, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_11, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_12, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_13, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_14, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_15, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_16, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_17, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_18, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_19, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_20, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_21, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_22, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_23, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_24, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_25, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_26, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_27, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_28, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_29, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_30, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_31, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_32, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_33, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_34, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_35, \
+# subj08_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_36" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --output_file methods_comparison_roi_threshold_s8_samplewise_sc \
+# --gradient
+
+# python plots_across_methods.py \
+# --methods "subj04_40sess_hypatia_sc_nsd_general, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_1, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_2, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_3, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_4, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_5, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_6, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_7, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_8, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_9, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_10, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_11, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_12, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_13, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_14, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_15, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_16, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_17, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_18, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_19, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_20, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_21, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_22, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_23, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_24, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_25, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_26, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_27, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_28, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_29, \
+# subj04_40sess_hypatia_sc_ridge_rank_order_rois_samplewise_30" \
+# --data_path ../dataset \
+# --output_path ../figs/ \
+# --subjs 3,4,6,8 \
+# --output_file methods_comparison_roi_threshold_s3468_samplewise_sc \
+# --gradient
+
+
 python plots_across_methods.py \
     --methods "mindeye1_subj01, \
     braindiffuser_subj01, \
-    final_subj01_pretrained_40sess_24bs, \
-    pretrained_subj01_40sess_hypatia_vd_dual_proj_avg, \
-    subj01_40sess_hypatia_turbo_ridge_flat3, \
-    subj01_40sess_hypatia_ridge_sc3,
-    subj01_40sess_hypatia_ridge_sc_flux,
-    subj01_40sess_hypatia_ridge_sc_flux_enhanced,
-    subj01_40sess_hypatia_ridge_sc_sd35,
-    subj01_40sess_hypatia_ridge_sc_sd35_enhanced,
-    subj01_40sess_hypatia_ridge_sd35_no_blurry" \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_50000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_50000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_50000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_200000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_200000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_200000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_1000000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_1000000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_1000000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_5000000_wd_50000_max_it, \
+    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_10000000_wd_50000_max_it" \
     --data_path ../dataset \
     --output_path ../figs/ \
     --output_file methods_scatter_reduced4
+
+#     # --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5)" \
+#     # --criteria "InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --criteria "Brain Corr. nsd_general,Brain Corr. V1,Brain Corr. V2,Brain Corr. V3,Brain Corr. V4,Brain Corr. higher_vis" \
