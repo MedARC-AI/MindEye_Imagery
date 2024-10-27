@@ -698,26 +698,47 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 # --gradient
 
 
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj01, \
+#     braindiffuser_subj01, \
+#     subj01_40sess_hypatia_ridge_sc_0.70_strength, \
+#     subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_50000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_50000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_50000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_200000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_200000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_200000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_1000000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_1000000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_1000000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_5000000_wd_50000_max_it, \
+#     subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_10000000_wd_50000_max_it" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --output_file methods_scatter_reduced4
+
+
 python plots_across_methods.py \
     --methods "mindeye1_subj01, \
     braindiffuser_subj01, \
-    subj01_40sess_hypatia_ridge_sc_0.70_strength, \
+    subj01_40sess_hypatia_ridge_sc3, \
+    subj01_40sess_hypatia_ridge_sc_vdvae, \
+    subj01_40sess_hypatia_ridge_sc_0.65_strength_vdvae, \
     subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_50000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_50000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_50000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_200000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_200000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_200000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_100000_wd_1000000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_500000_wd_1000000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_1000000_wd_1000000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_5000000_wd_50000_max_it, \
-    subj01_40sess_hypatia_ridge_sc_vdvae_0.70_strength_10000000_wd_50000_max_it" \
+    subj01_40sess_hypatia_ridge_sc_0.60_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.65_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.80_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_sharpness, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_contrast_sharpness, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_sharpness_color" \
     --data_path ../dataset \
     --output_path ../figs/ \
-    --output_file methods_scatter_reduced4
+    --criteria "Brain Corr. nsd_general,Brain Corr. V1,Brain Corr. V2,Brain Corr. V3,Brain Corr. V4,Brain Corr. higher_vis" \
+    --output_file methods_scatter_sc_low_level_brain_corr
 
-#     # --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5)" \
+    
+    # --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5)" \
 #     # --criteria "InceptionV3,CLIP,EffNet-B,SwAV" \
 #     --criteria "Brain Corr. nsd_general,Brain Corr. V1,Brain Corr. V2,Brain Corr. V3,Brain Corr. V4,Brain Corr. higher_vis" \
