@@ -442,3 +442,23 @@ python plots_across_methods.py \
     --output_file methods_scatter_sc_low_level
 
     #,subj01_40sess_hypatia_ridge_sc_medium_captions
+
+python plots_across_methods.py \
+    --methods "mindeye1_subj01, \
+    braindiffuser_subj01, \
+    subj01_40sess_hypatia_ridge_sc3, \
+    subj01_40sess_hypatia_ridge_sc_vdvae, \
+    subj01_40sess_hypatia_ridge_sc_0.65_strength_vdvae, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae, \
+    subj01_40sess_hypatia_ridge_sc_0.60_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.65_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.80_strength, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_sharpness, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_contrast_sharpness, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_sharpness_color, \
+    subj01_40sess_hypatia_ridge_sc_0.70_strength_vdvae_contrast_sharpness_color" \
+    --data_path ../dataset \
+    --output_path ../figs/ \
+    --stimtype concept \
+    --output_file methods_scatter_sc_low_level_concept
