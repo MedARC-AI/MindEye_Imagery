@@ -6,7 +6,10 @@ To install the proper environment, follow `src/setup.sh`.
 
 To use this branch, you must also clone the StableCascade repo from `https://github.com/Stability-AI/StableCascade.git` into your src directory, such that it is located at `MindEye_Imagery/src/StableCascade/
 
-The Stable Cascade models below need to be downloaded from our project huggingface repo (https://huggingface.co/datasets/reesekneeland/mindeye_imagery/tree/main) and placed into your `cache_dir`
+You will need a checkpoint for the VDVAE to use the low level pipeline, you can download the following checkpoint from our project hugginface repo(https://huggingface.co/datasets/reesekneeland/mindeye_imagery/tree/main):
+- imagenet64-iter-1600000-model-ema.th
+
+It should download the Stable Cascade models you need automatically, but if it doesn't, you can also download them from our project huggingface repo linked above, and place them into your `cache_dir`.
 - effnet_encoder.safetensors
 - previewer.safetensors
 - stage_a.safetensors
