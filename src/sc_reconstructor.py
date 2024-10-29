@@ -73,15 +73,11 @@ class SC_Reconstructor(object):
         if images.dim() == 3:
             images = images.unsqueeze(0)
         preprocessed_images = self.extras.clip_preprocess(images)
-        
+        outputs = self.models.image_model(preprocessed_images)
         if hidden:
-            outputs = self.models.image_model(preprocessed_images, output_hidden_states=True)
-            last_hidden_layer = outputs.hidden_states[-1]
-            return last_hidden_layer
+            return outputs.last_hidden_state
         else:
-            outputs = self.models.image_model(preprocessed_images)
-            image_embeddings = outputs.image_embeds
-            return image_embeddings.unsqueeze(1)
+            return outputs.image_embeds.unsqueeze(1)
     
     def embed_text(self, text):
         clip_tokens_unpooled = self.models.tokenizer(text, truncation=True, padding="max_length",

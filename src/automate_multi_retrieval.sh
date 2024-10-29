@@ -1,26 +1,18 @@
 jupyter nbconvert Train.ipynb --to python
-jupyter nbconvert recon_inference_mi.ipynb --to python
+jupyter nbconvert recon_inference_mi_multi.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
-export CUDA_VISIBLE_DEVICES="0"
-for subj in 3; do
-    model_name="subj0${subj}_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions"
+export CUDA_VISIBLE_DEVICES="2"
+subj=1
 
-    python Train.py \
-        --data_path=../dataset \
-        --cache_dir=../cache \
-        --model_name=${model_name} \
-        --no-multi_subject \
-        --subj=${subj} \
-        --weight_decay=100000 \
-        --dual_guidance \
-        --caption_type="short"
+for nips in 16 24; do
+    model_name="subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_${nips}_retrieval"
 
     for mode in "vision" "imagery"; do #
 
-        python recon_inference_mi.py \
+        python recon_inference_mi_multi.py \
             --model_name $model_name \
             --subj $subj \
             --mode $mode \
@@ -31,7 +23,9 @@ for subj in 3; do
             --dual_guidance \
             --strength 0.70 \
             --filter_contrast \
-            --filter_sharpness
+            --filter_sharpness \
+            --num_images_per_sample $nips \
+            --retrieval
             
         python final_evaluations_mi_multi.py \
                 --model_name $model_name \

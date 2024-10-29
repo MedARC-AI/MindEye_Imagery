@@ -426,13 +426,13 @@ def versatile_diffusion_recon(brain_clip_embeddings,
     
     return recon_img, brain_recons, best_picks
 
-def pick_best_recon(brain_recons, proj_embeddings, clip_extractor):
+def pick_best_recon(brain_recons, proj_embeddings, clip_extractor, hidden=False):
     # pick best reconstruction out of several
     best_picks = np.zeros(1).astype(np.int16)
     v2c_reference_out = nn.functional.normalize(proj_embeddings.view(len(proj_embeddings),-1),dim=-1)
     sims=[]
     for im in range(len(brain_recons)): 
-        currecon = clip_extractor.embed_image(brain_recons[im]).to(proj_embeddings.device).to(proj_embeddings.dtype)
+        currecon = clip_extractor.embed_image(brain_recons[im], hidden=hidden).to(proj_embeddings.device).to(proj_embeddings.dtype)
         currecon = nn.functional.normalize(currecon.view(len(currecon),-1),dim=-1)
         cursim = batchwise_cosine_similarity(v2c_reference_out,currecon)
         sims.append(cursim.item())
