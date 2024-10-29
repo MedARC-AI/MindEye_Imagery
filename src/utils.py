@@ -649,7 +649,7 @@ def condition_average_old(x, y, cond, nest=False):
 #average: whether to average across trials, will produce x that is (stimuli, 1, voxels)
 #nest: whether to nest the data according to stimuli, will produce x that is (stimuli, trials, voxels)
 #data_root: path to where the dataset is saved.
-def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, data_root="../dataset/"):
+def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, samplewise=False, whole_brain=False, data_root="../dataset"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
     img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -675,16 +675,23 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                             np.logical_or(exps=='imgA_1', exps=='imgA_2'),
                                             np.logical_or(exps=='imgB_1', exps=='imgB_2')),
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
+    
     # Load normalized betas
-    if snr == -1.0:
-        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
-    else:
-        if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
-            create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
-            create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
+    if whole_brain:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
-        snr_mask = calculate_snr_mask(subject, snr, data_path=data_root)
-        x = x[:,snr_mask]
+    elif top_n_rois != -1:
+        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
+        x = mask_whole_brain_on_top_n_rois(subject, x, top_n_rois, samplewise, data_root)  
+    else:
+        if snr == -1.0:
+            x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
+        else:
+            if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
+                create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
+                create_whole_region_imagery_normalized(subject = subject, mask=False, data_path=data_root)
+            x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
+            snr_mask = calculate_snr_mask(subject, snr, data_path=data_root)
+            x = x[:,snr_mask]
     # Find the trial indices conditioned on the type of trials we want to load
     cond_im_idx = {n: [image_map[c] for c in cues[idx]] for n,idx in cond_idx.items()}
     conditionals = cond_im_idx[mode+stimtype]
@@ -1128,6 +1135,187 @@ def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/"
             betas = f['betas'][:]
             betas = torch.from_numpy(betas).to("cpu")
         
+    return betas.to(data_type)
+
+def load_nsd(subject, betas=None, data_path="../dataset/"):
+    # Load betas if not provided
+    if betas is None:
+        with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+
+    # Load stimulus descriptions
+    stim_descriptions = pd.read_csv(
+        f"{data_path}/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0
+    )
+
+    # Define repeat columns
+    rep_columns = [f"subject{subject}_rep{j}" for j in range(3)]
+
+    # Filter training data (exclude shared1000 trials)
+    subj_train = stim_descriptions[
+        (stim_descriptions[f"subject{subject}"] != 0) & (stim_descriptions["shared1000"] == False)
+    ]
+
+    # Get the scan IDs for the three repeats in training data
+    scan_ids_train = subj_train[rep_columns].values - 1  # Convert to zero-based indices
+
+    # Flatten the scan IDs for training data
+    flat_scan_ids_train = scan_ids_train.flatten()
+
+    # Create an array of nsd IDs repeated for each repeat in training data
+    nsd_ids_train = subj_train["nsdId"].values
+    repeated_nsd_ids_train = np.repeat(nsd_ids_train, 3)
+
+    # Handle missing values and invalid indices in training data
+    valid_mask_train = (
+        (~np.isnan(flat_scan_ids_train))
+        & (flat_scan_ids_train >= 0)
+        & (flat_scan_ids_train < betas.shape[0])
+    )
+    valid_scan_ids_train = flat_scan_ids_train[valid_mask_train].astype(int)
+    valid_nsd_ids_train = repeated_nsd_ids_train[valid_mask_train].astype(int)
+
+    # Extract the corresponding brain activity data for training data
+    x_train = betas[valid_scan_ids_train]
+
+    # Filter test data (include shared1000 trials)
+    subj_test = stim_descriptions[
+        (stim_descriptions[f"subject{subject}"] != 0) & (stim_descriptions["shared1000"] == True)
+    ]
+
+    # Get the scan IDs for the three repeats in test data
+    scan_ids_test = subj_test[rep_columns].values - 1  # Convert to zero-based indices
+
+    # Handle missing values and invalid indices in test data
+    valid_mask_test = (
+        (~np.isnan(scan_ids_test))
+        & (scan_ids_test >= 0)
+        & (scan_ids_test < betas.shape[0])
+    )
+    scan_ids_test[~valid_mask_test] = -1  # Mark invalid indices with -1
+
+    # Prepare to extract betas for test data
+    num_test_trials, num_repeats = scan_ids_test.shape
+    betas_test = torch.zeros((num_test_trials, num_repeats, betas.shape[1]), dtype=betas.dtype)
+
+    # Extract betas for valid scan IDs
+    for i in range(num_test_trials):
+        for j in range(num_repeats):
+            scan_id = scan_ids_test[i, j]
+            if scan_id >= 0:
+                betas_test[i, j] = betas[int(scan_id)]
+
+    # Create a mask tensor for valid betas
+    valid_mask_test_tensor = torch.from_numpy(valid_mask_test.astype(np.float32))
+
+    # Sum over repeats
+    betas_test_sum = betas_test.sum(dim=1)  # Shape: (1000, voxels)
+
+    # Count valid repeats for each trial
+    valid_counts = valid_mask_test.sum(axis=1)  # Shape: (1000,)
+    valid_counts_tensor = torch.from_numpy(valid_counts).float().unsqueeze(1)
+
+    # Avoid division by zero
+    valid_counts_tensor[valid_counts_tensor == 0] = 1
+
+    # Compute the average over valid repeats
+    x_test = betas_test_sum / valid_counts_tensor
+
+    # Set x_test to zero where there are no valid repeats
+    zero_counts = (valid_counts == 0)
+    if zero_counts.any():
+        x_test[zero_counts] = 0
+
+    # Get nsd IDs for test data
+    test_nsd_ids = subj_test["nsdId"].values.astype(int)
+
+    return x_train, valid_nsd_ids_train, x_test, test_nsd_ids
+
+def load_subject_masks(subject_ids, data_path):
+    subject_masks = {}
+
+    # Preload masks for all subjects
+    for subject_id in subject_ids:
+        mask_path = f"{data_path}/combined_masks/{subject_id}_combined_mask.nii.gz"
+        mask = nb.load(mask_path).get_fdata()
+
+        brainmask_path = f"{data_path}/nsddata/ppdata/{subject_id}/func1pt8mm/roi/brainmask_inflated_1.0.nii"
+        brainmask_inflated = nb.load(brainmask_path).get_fdata()
+
+        # Clean up brainmask
+        brainmask_inflated = np.nan_to_num(brainmask_inflated)
+        brainmask_inflated = np.where(brainmask_inflated == 1.0, True, False)
+
+        mask = mask[brainmask_inflated]
+
+        # Load ROI labels
+        labels_path = f"{data_path}/combined_masks/{subject_id}_labels.txt"
+        label_to_roi = {}
+        with open(labels_path, 'r') as label_file:
+            for line in label_file:
+                idx, roi_name = line.strip().split(": ")
+                if roi_name != 'No Mask':
+                    label_to_roi[int(idx)] = roi_name
+
+        # Create filtered masks for ROIs
+        filtered_mask = {roi: mask == number for number, roi in label_to_roi.items()}
+        subject_masks[subject_id] = {"filtered_mask": filtered_mask, "label_to_roi": label_to_roi}
+
+    return subject_masks
+
+
+def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, data_path): 
+
+    subject_ids = [f'subj0{i}' for i in range(1, 9)]
+    subject_masks = load_subject_masks(subject_ids, data_path)
+    excluded_subject_mask = subject_masks[f'subj0{excluded_subject}']['filtered_mask']
+    
+    rank_order_rois = {}
+    
+    # Load rank order ROIs from JSON file
+    if samplewise:
+        with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order_samplewise.json', 'r') as file:
+            rank_order_rois = json.load(file)
+    else:
+        with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order_voxelwise.json', 'r') as file:
+            rank_order_rois = json.load(file)
+    
+    rank_order_rois_keys = list(rank_order_rois.keys())
+    
+    # Create initial ROI mask
+    roi_mask = np.logical_or(excluded_subject_mask[rank_order_rois_keys[0]], excluded_subject_mask[rank_order_rois_keys[0]])
+    
+    # Apply ROI masks for top_n_rois
+    for i in range(top_n_rois):
+        roi_mask = np.logical_or(roi_mask, excluded_subject_mask[rank_order_rois_keys[i]])
+    
+    # Convert to PyTorch tensor
+    roi_mask = torch.from_numpy(roi_mask).to("cpu")
+    
+    # Apply mask to betas
+    betas = betas[..., roi_mask]
+    
+    return betas
+
+
+def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.float16, top_n_rois=-1, samplewise=False, data_path="../dataset/"):
+    
+    if top_n_rois != -1.0:
+        
+        # Load the betas for the excluded subject
+        with h5py.File(f'{data_path}/betas_all_whole_brain_subj{excluded_subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+    
+        betas = mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, data_path)
+    
+    else:              
+        # Load betas without applying any ROI masking
+        with h5py.File(f'{data_path}/betas_all_subj{excluded_subject:02d}_fp32_renorm.hdf5', 'r') as f:
+            betas = f['betas'][:]
+            betas = torch.from_numpy(betas).to("cpu")
+    
     return betas.to(data_type)
 
 def load_nsd(subject, betas=None, data_path="../dataset/"):

@@ -1,26 +1,29 @@
-jupyter nbconvert Train.ipynb --to python
-jupyter nbconvert recon_inference_mi.ipynb --to python
+jupyter nbconvert Train_ro.ipynb --to python
+jupyter nbconvert recon_inference_mi_ro.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
-export CUDA_VISIBLE_DEVICES="0"
-for subj in 3, 6; do
-    model_name="subj0${subj}_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions"
-
-    python Train.py \
+export CUDA_VISIBLE_DEVICES="3"
+subj=1 
+for num_rois in {10..60}; do 
+    model_name="subj0${subj}_40sess_hypatia_ridge_scv_RO_rois_${num_rois}"
+    echo model_name=${model_name}
+    python Train_ro.py \
         --data_path=../dataset \
         --cache_dir=../cache \
         --model_name=${model_name} \
         --no-multi_subject \
         --subj=${subj} \
-        --weight_decay=100000 \
         --dual_guidance \
-        --caption_type="short"
+        --caption_type="short" \
+        --top_n_rank_order_rois ${num_rois} \
+        --samplewise_rank_order_rois
+
 
     for mode in "vision" "imagery"; do #
 
-        python recon_inference_mi.py \
+        python recon_inference_mi_ro.py \
             --model_name $model_name \
             --subj $subj \
             --mode $mode \
@@ -31,7 +34,9 @@ for subj in 3, 6; do
             --dual_guidance \
             --strength 0.70 \
             --filter_contrast \
-            --filter_sharpness
+            --filter_sharpness \
+            --top_n_rank_order_rois ${num_rois} \
+            --samplewise_rank_order_rois
             
         python final_evaluations_mi_multi.py \
                 --model_name $model_name \
@@ -52,15 +57,3 @@ for subj in 3, 6; do
 
         done
     done
-
-# python plots_across_methods.py \
-#     --methods "mindeye1_subj01, \
-#     braindiffuser_subj01, \
-#     final_subj01_pretrained_40sess_24bs, \
-#     subj01_40sess_hypatia_ridge_sc3, \
-#     subj01_40sess_hypatia_ridge_scv_0.70_strength, \
-#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions, \
-#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_medium_captions" \
-#     --data_path ../dataset \
-#     --output_path ../figs/ \
-#     --output_file methods_scatter_best

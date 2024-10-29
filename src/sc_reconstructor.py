@@ -65,15 +65,23 @@ class SC_Reconstructor(object):
                 )
             print("STAGE B READY")
     
-    def embed_image(self, images):
+    def embed_image(self, images, hidden=False):
         if isinstance(images, PIL.Image.Image):
             images = resize_image(images).to(self.device)
         elif isinstance(images, list):
             images = torch.stack([resize_image(image).to(self.device) for image in images])
         if images.dim() == 3:
             images = images.unsqueeze(0)
-        image_embeddings = self.models.image_model(self.extras.clip_preprocess(images)).image_embeds
-        return image_embeddings.unsqueeze(1)
+        preprocessed_images = self.extras.clip_preprocess(images)
+        
+        if hidden:
+            outputs = self.models.image_model(preprocessed_images, output_hidden_states=True)
+            last_hidden_layer = outputs.hidden_states[-1]
+            return last_hidden_layer
+        else:
+            outputs = self.models.image_model(preprocessed_images)
+            image_embeddings = outputs.image_embeds
+            return image_embeddings.unsqueeze(1)
     
     def embed_text(self, text):
         clip_tokens_unpooled = self.models.tokenizer(text, truncation=True, padding="max_length",
