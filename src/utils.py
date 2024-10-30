@@ -675,7 +675,7 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                             np.logical_or(exps=='imgA_1', exps=='imgA_2'),
                                             np.logical_or(exps=='imgB_1', exps=='imgB_2')),
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
-    
+    print(f"load nsd mi: nsdgeneral {nsd_general}, whole brain {whole_brain}, top n rois {top_n_rois}, samplewise {samplewise}")
     # Load normalized betas
     if whole_brain:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
@@ -1272,7 +1272,7 @@ def load_subject_masks(subject_ids, data_path, nsd_general=False):
 
 
 def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, nsd_general, data_path): 
-
+    print(f"mask_whole_brain_on_top_n_rois: nsdgeneral {nsd_general}, top n rois {top_n_rois}, samplewise {samplewise}")
     subject_ids = [f'subj0{i}' for i in range(1, 9)]
     subject_masks = load_subject_masks(subject_ids, data_path, nsd_general)
     excluded_subject_mask = subject_masks[f'subj0{excluded_subject}']['filtered_mask']
