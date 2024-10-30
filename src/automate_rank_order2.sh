@@ -4,8 +4,8 @@ jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
-export CUDA_VISIBLE_DEVICES="1"
-for subj in 3 4; do
+export CUDA_VISIBLE_DEVICES="2"
+for subj in 6 8; do
     for num_rois in {2..43}; do 
         model_name="subj0${subj}_40sess_hypatia_ridge_scv_nsd_general_RO_rois_${num_rois}"
         echo model_name=${model_name}

@@ -649,7 +649,7 @@ def condition_average_old(x, y, cond, nest=False):
 #average: whether to average across trials, will produce x that is (stimuli, 1, voxels)
 #nest: whether to nest the data according to stimuli, will produce x that is (stimuli, trials, voxels)
 #data_root: path to where the dataset is saved.
-def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, samplewise=False, whole_brain=False, data_root="../dataset"):
+def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, samplewise=False, whole_brain=False, nsd_general=False, data_root="../dataset"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
     img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
@@ -681,7 +681,7 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
     elif top_n_rois != -1:
         x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt")
-        x = mask_whole_brain_on_top_n_rois(subject, x, top_n_rois, samplewise, data_root)  
+        x = mask_whole_brain_on_top_n_rois(subject, x, top_n_rois, samplewise, nsd_general, data_root)  
     else:
         if snr == -1.0:
             x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
@@ -1232,12 +1232,15 @@ def load_nsd(subject, betas=None, data_path="../dataset/"):
 
     return x_train, valid_nsd_ids_train, x_test, test_nsd_ids
 
-def load_subject_masks(subject_ids, data_path):
+def load_subject_masks(subject_ids, data_path, nsd_general=False):
     subject_masks = {}
 
     # Preload masks for all subjects
     for subject_id in subject_ids:
-        mask_path = f"{data_path}/combined_masks/{subject_id}_combined_mask.nii.gz"
+        if nsd_general:
+            mask_path = f"{data_path}/combined_masks/{subject_id}_combined_mask_nsd_general.nii.gz"
+        else:
+            mask_path = f"{data_path}/combined_masks/{subject_id}_combined_mask.nii.gz"
         mask = nb.load(mask_path).get_fdata()
 
         brainmask_path = f"{data_path}/nsddata/ppdata/{subject_id}/func1pt8mm/roi/brainmask_inflated_1.0.nii"
@@ -1250,7 +1253,10 @@ def load_subject_masks(subject_ids, data_path):
         mask = mask[brainmask_inflated]
 
         # Load ROI labels
-        labels_path = f"{data_path}/combined_masks/{subject_id}_labels.txt"
+        if nsd_general:
+            labels_path = f"{data_path}/combined_masks/{subject_id}_labels_nsd_general.txt"
+        else:
+            labels_path = f"{data_path}/combined_masks/{subject_id}_labels.txt"
         label_to_roi = {}
         with open(labels_path, 'r') as label_file:
             for line in label_file:
@@ -1265,16 +1271,21 @@ def load_subject_masks(subject_ids, data_path):
     return subject_masks
 
 
-def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, data_path): 
+def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, nsd_general, data_path): 
 
     subject_ids = [f'subj0{i}' for i in range(1, 9)]
-    subject_masks = load_subject_masks(subject_ids, data_path)
+    subject_masks = load_subject_masks(subject_ids, data_path, nsd_general)
     excluded_subject_mask = subject_masks[f'subj0{excluded_subject}']['filtered_mask']
     
+    # print(len(excluded_subject_mask.keys()), excluded_subject_mask.keys())
     rank_order_rois = {}
     
     # Load rank order ROIs from JSON file
-    if samplewise:
+    # print(nsd_general, samplewise)
+    if nsd_general:
+        with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order_samplewise_nsd_general.json', 'r') as file:
+            rank_order_rois = json.load(file)
+    elif samplewise:
         with open(f'{data_path}/subj0{excluded_subject}_sorted_rois_rank_order_samplewise.json', 'r') as file:
             rank_order_rois = json.load(file)
     else:
@@ -1282,7 +1293,6 @@ def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewi
             rank_order_rois = json.load(file)
     
     rank_order_rois_keys = list(rank_order_rois.keys())
-    
     # Create initial ROI mask
     roi_mask = np.logical_or(excluded_subject_mask[rank_order_rois_keys[0]], excluded_subject_mask[rank_order_rois_keys[0]])
     
@@ -1299,7 +1309,7 @@ def mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewi
     return betas
 
 
-def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.float16, top_n_rois=-1, samplewise=False, data_path="../dataset/"):
+def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.float16, top_n_rois=-1, samplewise=False, nsd_general=False, data_path="../dataset/"):
     
     if top_n_rois != -1.0:
         
@@ -1308,7 +1318,7 @@ def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.fl
             betas = f['betas'][:]
             betas = torch.from_numpy(betas).to("cpu")
     
-        betas = mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, data_path)
+        betas = mask_whole_brain_on_top_n_rois(excluded_subject, betas, top_n_rois, samplewise, nsd_general=nsd_general, data_path=data_path)
     
     else:              
         # Load betas without applying any ROI masking

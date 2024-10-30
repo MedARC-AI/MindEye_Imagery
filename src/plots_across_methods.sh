@@ -823,50 +823,80 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 #     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions, \
 #     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_4, \
 #     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_8, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_16, \
 #     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_4_retrieval, \
-#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_8_retrieval" \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_8_retrieval, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_16_retrieval" \
 #     --data_path ../dataset \
 #     --output_path ../figs/ \
-#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5)" \
-#     --output_file methods_scatter_retrieval_low_level
+#     --criteria "InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_retrieval_high_level
 
 # python plots_acro
 
+# python plots_across_methods.py \
+#     --methods "subj03_40sess_hypatia_ridge_scv_0.70_strength_100000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_50000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_10000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_1000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_100_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_10_vwd_fs_fcon_short_captions" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --subjs 3,4 \
+#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5)" \
+#     --output_file methods_scatter_vdvae_weight_decay2_s34_low_level
+
+#     python plots_across_methods.py \
+#     --methods "subj03_40sess_hypatia_ridge_scv_0.70_strength_100000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_50000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_10000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_1000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_100_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_10_vwd_fs_fcon_short_captions" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --subjs 3,4 \
+#     --criteria "InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_vdvae_weight_decay2_s34_high_level
+
+#     python plots_across_methods.py \
+#     --methods "subj03_40sess_hypatia_ridge_scv_0.70_strength_100000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_50000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_10000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_1000_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_100_vwd_fs_fcon_short_captions, \
+#     subj03_40sess_hypatia_ridge_scv_0.70_strength_10_vwd_fs_fcon_short_captions" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --subjs 3,4 \
+#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_vdvae_weight_decay2_s34
+
+
+
 python plots_across_methods.py \
-    --methods "subj03_40sess_hypatia_ridge_scv_0.70_strength_100000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_50000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_10000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_1000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_100_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_10_vwd_fs_fcon_short_captions" \
+    --methods "subj03_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_snr_0.70, \
+    subj03_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_snr_0.65, \
+    subj03_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_snr_0.60, \
+    subj03_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_snr_0.55, \
+    subj03_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_snr_0.50, \
+    subj03_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_snr_0.45, \
+    subj03_40sess_hypatia_ridge_scv_0.70_strength_100000_vwd_fs_fcon_short_captions" \
     --data_path ../dataset \
     --output_path ../figs/ \
-    --subjs 3,4 \
-    --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5)" \
-    --output_file methods_scatter_vdvae_weight_decay2_s34_low_level
-
-    python plots_across_methods.py \
-    --methods "subj03_40sess_hypatia_ridge_scv_0.70_strength_100000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_50000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_10000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_1000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_100_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_10_vwd_fs_fcon_short_captions" \
-    --data_path ../dataset \
-    --output_path ../figs/ \
-    --subjs 3,4 \
-    --criteria "InceptionV3,CLIP,EffNet-B,SwAV" \
-    --output_file methods_scatter_vdvae_weight_decay2_s34_high_level
-
-    python plots_across_methods.py \
-    --methods "subj03_40sess_hypatia_ridge_scv_0.70_strength_100000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_50000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_10000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_1000_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_100_vwd_fs_fcon_short_captions, \
-    subj03_40sess_hypatia_ridge_scv_0.70_strength_10_vwd_fs_fcon_short_captions" \
-    --data_path ../dataset \
-    --output_path ../figs/ \
-    --subjs 3,4 \
     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
-    --output_file methods_scatter_vdvae_weight_decay2_s34
+    --output_file methods_scatter_snr_s3
+
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj01, \
+#     braindiffuser_subj01, \
+#     final_subj01_pretrained_40sess_24bs, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_4_retrieval, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_8_retrieval, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_16_retrieval" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_reduced_retrieval
