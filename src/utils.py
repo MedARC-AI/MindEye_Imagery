@@ -1333,7 +1333,7 @@ def load_nsd(subject, betas=None, data_path="../dataset/"):
     if betas is None:
         with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
             betas = f['betas'][:]
-            betas = torch.from_numpy(betas).to("cpu")
+            betas = torch.from_numpy(betas).to("cpu").to(torch.float16)
 
     # Load stimulus descriptions
     stim_descriptions = pd.read_csv(
