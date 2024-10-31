@@ -16,7 +16,7 @@ for subj in 1 2; do
 
     for mode in "vision" "imagery"; do #
 
-        python recon_inference_mi_final.py \
+        python recon_inference_mi.py \
             --model_name $model_name \
             --subj $subj \
             --mode $mode \
