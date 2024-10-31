@@ -1137,7 +1137,7 @@ def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/"
         
     return betas.to(data_type)
 
-def load_nsd(subject, betas=None, data_path="../dataset/"):
+def load_nsd(subject, betas=None, num_sessions=40, data_path="../dataset/"):
     # Load betas if not provided
     if betas is None:
         with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
@@ -1172,6 +1172,7 @@ def load_nsd(subject, betas=None, data_path="../dataset/"):
         (~np.isnan(flat_scan_ids_train))
         & (flat_scan_ids_train >= 0)
         & (flat_scan_ids_train < betas.shape[0])
+        & (flat_scan_ids_train < num_sessions * 750)
     )
     valid_scan_ids_train = flat_scan_ids_train[valid_mask_train].astype(int)
     valid_nsd_ids_train = repeated_nsd_ids_train[valid_mask_train].astype(int)
