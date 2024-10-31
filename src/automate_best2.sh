@@ -4,8 +4,8 @@ jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
-export CUDA_VISIBLE_DEVICES="0"
-for subj in 1 2; do
+export CUDA_VISIBLE_DEVICES="1"
+for subj in 5 7; do
     model_name="subj0${subj}_40sess_hypatia_mirage"
 
     python Train.py \
