@@ -1,26 +1,23 @@
 jupyter nbconvert Train.ipynb --to python
-jupyter nbconvert recon_inference_mi.ipynb --to python
+jupyter nbconvert recon_inference_mi_final.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
 export CUDA_VISIBLE_DEVICES="0"
 for subj in 1 2 5 7; do
-    model_name="subj0${subj}_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions"
+    model_name="subj0${subj}_40sess_hypatia_mirage"
 
     python Train.py \
         --data_path=../dataset \
         --cache_dir=../cache \
         --model_name=${model_name} \
         --no-multi_subject \
-        --subj=${subj} \
-        --weight_decay=100000 \
-        --dual_guidance \
-        --caption_type="short"
+        --subj=${subj} 
 
     for mode in "vision" "imagery"; do #
 
-        python recon_inference_mi.py \
+        python recon_inference_mi_final.py \
             --model_name $model_name \
             --subj $subj \
             --mode $mode \

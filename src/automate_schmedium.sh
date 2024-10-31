@@ -31,7 +31,8 @@ for subj in 1; do
             --dual_guidance \
             --strength 0.70 \
             --filter_contrast \
-            --filter_sharpness
+            --filter_sharpness \
+            --caption_type="schmedium"
             
         python final_evaluations_mi_multi.py \
                 --model_name $model_name \
