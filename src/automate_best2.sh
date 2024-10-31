@@ -5,7 +5,7 @@ jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
 export CUDA_VISIBLE_DEVICES="1"
-for subj in 5 7; do
+for subj in 2; do
     model_name="subj0${subj}_40sess_hypatia_mirage"
 
     python Train.py \
@@ -14,7 +14,7 @@ for subj in 5 7; do
         --model_name=${model_name} \
         --subj=${subj} 
 
-    for mode in "vision" "imagery"; do #
+    for mode in "vision" "imagery" "shared1000"; do #
 
         python recon_inference_mi.py \
             --model_name $model_name \

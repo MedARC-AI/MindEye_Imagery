@@ -5,8 +5,10 @@ jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
 export CUDA_VISIBLE_DEVICES="3"
-for subj in 5 7; do
+for subj in 7; do
     model_name="subj0${subj}_40sess_hypatia_mirage"
+
+    sleep 1h
 
     python Train.py \
         --data_path=../dataset \
@@ -14,7 +16,7 @@ for subj in 5 7; do
         --model_name=${model_name} \
         --subj=${subj} 
 
-    for mode in "shared1000"; do #
+    for mode in "vision" "imagery" "shared1000"; do #
 
         python recon_inference_mi.py \
             --model_name $model_name \
@@ -23,7 +25,7 @@ for subj in 5 7; do
             --cache_dir ../cache \
             --data_path ../dataset \
             --save_raw \
-            --raw_path /export/raid1/home/kneel027/Second-Sight/output/ \
+            --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/
             
         python final_evaluations_mi_multi.py \
                 --model_name $model_name \

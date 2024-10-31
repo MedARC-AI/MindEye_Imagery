@@ -5,16 +5,16 @@ jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
 export CUDA_VISIBLE_DEVICES="0"
-for subj in 1 2; do
+for subj in 1; do
     model_name="subj0${subj}_40sess_hypatia_mirage"
 
     python Train.py \
         --data_path=../dataset \
         --cache_dir=../cache \
         --model_name=${model_name} \
-        --subj=${subj} 
+        --subj=${subj}
 
-    for mode in "vision" "imagery"; do #
+    for mode in "vision" "imagery" "shared1000"; do #
 
         python recon_inference_mi.py \
             --model_name $model_name \
