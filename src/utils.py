@@ -1198,35 +1198,14 @@ def load_nsd(subject, betas=None, num_sessions=40, data_path="../dataset/"):
 
     # Prepare to extract betas for test data
     num_test_trials, num_repeats = scan_ids_test.shape
-    betas_test = torch.zeros((num_test_trials, num_repeats, betas.shape[1]), dtype=betas.dtype)
+    x_test = torch.zeros((num_test_trials, num_repeats, betas.shape[1]), dtype=betas.dtype)
 
     # Extract betas for valid scan IDs
     for i in range(num_test_trials):
         for j in range(num_repeats):
             scan_id = scan_ids_test[i, j]
             if scan_id >= 0:
-                betas_test[i, j] = betas[int(scan_id)]
-
-    # Create a mask tensor for valid betas
-    valid_mask_test_tensor = torch.from_numpy(valid_mask_test.astype(np.float32))
-
-    # Sum over repeats
-    betas_test_sum = betas_test.sum(dim=1)  # Shape: (1000, voxels)
-
-    # Count valid repeats for each trial
-    valid_counts = valid_mask_test.sum(axis=1)  # Shape: (1000,)
-    valid_counts_tensor = torch.from_numpy(valid_counts).float().unsqueeze(1)
-
-    # Avoid division by zero
-    valid_counts_tensor[valid_counts_tensor == 0] = 1
-
-    # Compute the average over valid repeats
-    x_test = betas_test_sum / valid_counts_tensor
-
-    # Set x_test to zero where there are no valid repeats
-    zero_counts = (valid_counts == 0)
-    if zero_counts.any():
-        x_test[zero_counts] = 0
+                x_test[i, j] = betas[int(scan_id)]
 
     # Get nsd IDs for test data
     test_nsd_ids = subj_test["nsdId"].values.astype(int)
