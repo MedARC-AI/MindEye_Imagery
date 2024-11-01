@@ -1,5 +1,5 @@
 jupyter nbconvert Train.ipynb --to python
-jupyter nbconvert recon_inference_mi_final.ipynb --to python
+jupyter nbconvert recon_inference_mi.ipynb --to python
 jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
@@ -49,16 +49,17 @@ for subj in 7; do
 
     model_name="subj0${subj}_40sess_hypatia_mirage2"
 
+    sleep 1h
+
     python Train.py \
         --data_path=../dataset \
         --cache_dir=../cache \
         --model_name=${model_name} \
-        --no-multi_subject \
         --subj=${subj} 
 
     for mode in "vision" "imagery"; do # "shared1000"
 
-        python recon_inference_mi_final.py \
+        python recon_inference_mi.py \
             --model_name $model_name \
             --subj $subj \
             --mode $mode \

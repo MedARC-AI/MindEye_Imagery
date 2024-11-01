@@ -1137,7 +1137,7 @@ def create_snr_betas(subject=1, data_type=torch.float16, data_path="../dataset/"
         
     return betas.to(data_type)
 
-def load_nsd(subject, betas=None, data_path="../dataset/"):
+def load_nsd(subject, betas=None, num_sessions=40, data_path="../dataset/"):
     # Load betas if not provided
     if betas is None:
         with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
@@ -1172,6 +1172,7 @@ def load_nsd(subject, betas=None, data_path="../dataset/"):
         (~np.isnan(flat_scan_ids_train))
         & (flat_scan_ids_train >= 0)
         & (flat_scan_ids_train < betas.shape[0])
+        & (flat_scan_ids_train < num_sessions * 750)
     )
     valid_scan_ids_train = flat_scan_ids_train[valid_mask_train].astype(int)
     valid_nsd_ids_train = repeated_nsd_ids_train[valid_mask_train].astype(int)
@@ -1197,35 +1198,14 @@ def load_nsd(subject, betas=None, data_path="../dataset/"):
 
     # Prepare to extract betas for test data
     num_test_trials, num_repeats = scan_ids_test.shape
-    betas_test = torch.zeros((num_test_trials, num_repeats, betas.shape[1]), dtype=betas.dtype)
+    x_test = torch.zeros((num_test_trials, num_repeats, betas.shape[1]), dtype=betas.dtype)
 
     # Extract betas for valid scan IDs
     for i in range(num_test_trials):
         for j in range(num_repeats):
             scan_id = scan_ids_test[i, j]
             if scan_id >= 0:
-                betas_test[i, j] = betas[int(scan_id)]
-
-    # Create a mask tensor for valid betas
-    valid_mask_test_tensor = torch.from_numpy(valid_mask_test.astype(np.float32))
-
-    # Sum over repeats
-    betas_test_sum = betas_test.sum(dim=1)  # Shape: (1000, voxels)
-
-    # Count valid repeats for each trial
-    valid_counts = valid_mask_test.sum(axis=1)  # Shape: (1000,)
-    valid_counts_tensor = torch.from_numpy(valid_counts).float().unsqueeze(1)
-
-    # Avoid division by zero
-    valid_counts_tensor[valid_counts_tensor == 0] = 1
-
-    # Compute the average over valid repeats
-    x_test = betas_test_sum / valid_counts_tensor
-
-    # Set x_test to zero where there are no valid repeats
-    zero_counts = (valid_counts == 0)
-    if zero_counts.any():
-        x_test[zero_counts] = 0
+                x_test[i, j] = betas[int(scan_id)]
 
     # Get nsd IDs for test data
     test_nsd_ids = subj_test["nsdId"].values.astype(int)
@@ -1327,101 +1307,6 @@ def load_subject_based_on_rank_order_rois(excluded_subject=1, data_type=torch.fl
             betas = torch.from_numpy(betas).to("cpu")
     
     return betas.to(data_type)
-
-def load_nsd(subject, betas=None, data_path="../dataset/"):
-    # Load betas if not provided
-    if betas is None:
-        with h5py.File(f'{data_path}/betas_all_subj{subject:02d}_fp32_renorm.hdf5', 'r') as f:
-            betas = f['betas'][:]
-            betas = torch.from_numpy(betas).to("cpu").to(torch.float16)
-
-    # Load stimulus descriptions
-    stim_descriptions = pd.read_csv(
-        f"{data_path}/nsddata/experiments/nsd/nsd_stim_info_merged.csv", index_col=0
-    )
-
-    # Define repeat columns
-    rep_columns = [f"subject{subject}_rep{j}" for j in range(3)]
-
-    # Filter training data (exclude shared1000 trials)
-    subj_train = stim_descriptions[
-        (stim_descriptions[f"subject{subject}"] != 0) & (stim_descriptions["shared1000"] == False)
-    ]
-
-    # Get the scan IDs for the three repeats in training data
-    scan_ids_train = subj_train[rep_columns].values - 1  # Convert to zero-based indices
-
-    # Flatten the scan IDs for training data
-    flat_scan_ids_train = scan_ids_train.flatten()
-
-    # Create an array of nsd IDs repeated for each repeat in training data
-    nsd_ids_train = subj_train["nsdId"].values
-    repeated_nsd_ids_train = np.repeat(nsd_ids_train, 3)
-
-    # Handle missing values and invalid indices in training data
-    valid_mask_train = (
-        (~np.isnan(flat_scan_ids_train))
-        & (flat_scan_ids_train >= 0)
-        & (flat_scan_ids_train < betas.shape[0])
-    )
-    valid_scan_ids_train = flat_scan_ids_train[valid_mask_train].astype(int)
-    valid_nsd_ids_train = repeated_nsd_ids_train[valid_mask_train].astype(int)
-
-    # Extract the corresponding brain activity data for training data
-    x_train = betas[valid_scan_ids_train]
-
-    # Filter test data (include shared1000 trials)
-    subj_test = stim_descriptions[
-        (stim_descriptions[f"subject{subject}"] != 0) & (stim_descriptions["shared1000"] == True)
-    ]
-
-    # Get the scan IDs for the three repeats in test data
-    scan_ids_test = subj_test[rep_columns].values - 1  # Convert to zero-based indices
-
-    # Handle missing values and invalid indices in test data
-    valid_mask_test = (
-        (~np.isnan(scan_ids_test))
-        & (scan_ids_test >= 0)
-        & (scan_ids_test < betas.shape[0])
-    )
-    scan_ids_test[~valid_mask_test] = -1  # Mark invalid indices with -1
-
-    # Prepare to extract betas for test data
-    num_test_trials, num_repeats = scan_ids_test.shape
-    betas_test = torch.zeros((num_test_trials, num_repeats, betas.shape[1]), dtype=betas.dtype)
-
-    # Extract betas for valid scan IDs
-    for i in range(num_test_trials):
-        for j in range(num_repeats):
-            scan_id = scan_ids_test[i, j]
-            if scan_id >= 0:
-                betas_test[i, j] = betas[int(scan_id)]
-
-    # Create a mask tensor for valid betas
-    valid_mask_test_tensor = torch.from_numpy(valid_mask_test.astype(np.float32))
-
-    # Sum over repeats
-    betas_test_sum = betas_test.sum(dim=1)  # Shape: (1000, voxels)
-
-    # Count valid repeats for each trial
-    valid_counts = valid_mask_test.sum(axis=1)  # Shape: (1000,)
-    valid_counts_tensor = torch.from_numpy(valid_counts).float().unsqueeze(1)
-
-    # Avoid division by zero
-    valid_counts_tensor[valid_counts_tensor == 0] = 1
-
-    # Compute the average over valid repeats
-    x_test = betas_test_sum / valid_counts_tensor
-
-    # Set x_test to zero where there are no valid repeats
-    zero_counts = (valid_counts == 0)
-    if zero_counts.any():
-        x_test[zero_counts] = 0
-
-    # Get nsd IDs for test data
-    test_nsd_ids = subj_test["nsdId"].values.astype(int)
-
-    return x_train, valid_nsd_ids_train, x_test, test_nsd_ids
 
 
 def calculate_snr_mask(subject, threshold, betas=None, data_path="../dataset/"):
