@@ -45,7 +45,7 @@ export CUDA_VISIBLE_DEVICES="3"
 #         done
 #     done
 
-for subj in 1 2 5 7; do
+for subj in 1; do
     model_name="subj0${subj}_40sess_hypatia_mirage3"
 
     # python Train.py \
@@ -56,14 +56,14 @@ for subj in 1 2 5 7; do
 
     for mode in "imagery"; do # "shared1000""vision" 
 
-        python recon_inference_mi_temp.py \
-            --model_name $model_name \
-            --subj $subj \
-            --mode $mode \
-            --cache_dir ../cache \
-            --data_path ../dataset \
-            --save_raw \
-            --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/ 
+        # python recon_inference_mi_temp.py \
+        #     --model_name $model_name \
+        #     --subj $subj \
+        #     --mode $mode \
+        #     --cache_dir ../cache \
+        #     --data_path ../dataset \
+        #     --save_raw \
+        #     --raw_path /export/raid1/home/kneel027/Second-Sight/output/mental_imagery_paper_b3/ 
             
         python final_evaluations_mi_multi.py \
                 --model_name $model_name \
