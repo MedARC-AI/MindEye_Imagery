@@ -4,20 +4,20 @@ jupyter nbconvert final_evaluations_mi_multi.ipynb --to python
 jupyter nbconvert plots_across_subjects.ipynb --to python
 jupyter nbconvert plots_across_methods.ipynb --to python
 
-export CUDA_VISIBLE_DEVICES="3"
+export CUDA_VISIBLE_DEVICES="2"
 subj=1
 for caption_type in "medium"; do
-    model_name="subj0${subj}_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_${caption_type}_captions"
+    model_name="subj0${subj}_40sess_hypatia_mirage_schmedium_train_medium_normalize"
 
-    # python Train.py \
-    #     --data_path=../dataset \
-    #     --cache_dir=../cache \
-    #     --model_name=${model_name} \
-    #     --no-multi_subject \
-    #     --subj=${subj} \
-    #     --weight_decay=100000 \
-    #     --dual_guidance \
-    #     --caption_type="schmedium"
+    python Train.py \
+        --data_path=../dataset \
+        --cache_dir=../cache \
+        --model_name=${model_name} \
+        --no-multi_subject \
+        --subj=${subj} \
+        --weight_decay=100000 \
+        --dual_guidance \
+        --caption_type="schmedium"
 
     for mode in "vision" "imagery"; do #
 
@@ -33,7 +33,7 @@ for caption_type in "medium"; do
             --strength 0.70 \
             --filter_contrast \
             --filter_sharpness \
-            --caption_type=${caption_type}
+            --caption_type="medium"
             
         python final_evaluations_mi_multi.py \
                 --model_name $model_name \
