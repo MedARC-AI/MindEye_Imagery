@@ -990,53 +990,96 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 #     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
 #     --output_file methods_scatter_nsd_general_rank_order_s6
 
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj01, \
+#     braindiffuser_subj01, \
+#     final_subj01_pretrained_40sess_24bs, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions, \
+#     subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_16_retrieval, \
+#     subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_2, \
+#     subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_3, \
+#     subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_4, \
+#     subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_5, \
+#     subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_6, \
+#     subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_7" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_nsd_general_rank_order_s1
+
 python plots_across_methods.py \
     --methods "mindeye1_subj01, \
     braindiffuser_subj01, \
     final_subj01_pretrained_40sess_24bs, \
-    subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions, \
-    subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_16_retrieval, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_2, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_3, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_4, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_5, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_6, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_7" \
+    subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_medium_captions, \
+    takagi_subj01, \
+    iCNN_subj01, \
+    subj01_40sess_hypatia_mirage_schmedium_train_medium_normalize, \
+    subj01_40sess_hypatia_mirage_no_retrieval, \
+    subj01_40sess_hypatia_mirage2, \
+    subj01_40sess_hypatia_mirage3, \
+    subj01_40sess_hypatia_mirage4_no_retrieval, \
+    subj01_40sess_hypatia_mirage" \
     --data_path ../dataset \
     --output_path ../figs/ \
     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
-    --output_file methods_scatter_nsd_general_rank_order_s1
+    --output_file methods_scatter_final_s1
+
+
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj02, \
+#     braindiffuser_subj02, \
+#     final_subj02_pretrained_40sess_24bs, \
+#     takagi_subj02, \
+#     iCNN_subj02, \
+#     subj02_40sess_hypatia_mirage2, \
+#     subj02_40sess_hypatia_mirage_no_retrieval, \
+#     subj02_40sess_hypatia_mirage" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_final_s2
+
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj05, \
+#     braindiffuser_subj05, \
+#     final_subj05_pretrained_40sess_24bs, \
+#     takagi_subj05, \
+#     iCNN_subj05, \
+#     subj05_40sess_hypatia_mirage2, \
+#     subj05_40sess_hypatia_mirage_no_retrieval, \
+#     subj05_40sess_hypatia_mirage" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_final_s5
+    
+
+# python plots_across_methods.py \
+#     --methods "mindeye1_subj07, \
+#     braindiffuser_subj07, \
+#     final_subj07_pretrained_40sess_24bs, \
+#     takagi_subj07, \
+#     iCNN_subj07, \
+#     subj07_40sess_hypatia_mirage2, \
+#     subj07_40sess_hypatia_mirage_no_retrieval, \
+#     subj07_40sess_hypatia_mirage" \
+#     --data_path ../dataset \
+#     --output_path ../figs/ \
+#     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
+#     --output_file methods_scatter_final_s7
 
 python plots_across_methods.py \
-    --methods "mindeye1_subj01, \
-    braindiffuser_subj01, \
-    final_subj01_pretrained_40sess_24bs, \
-    subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions, \
-    subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_16_retrieval, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_2, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_3, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_4, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_5, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_6, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_7" \
+    --methods "mindeye1_subj07, \
+    braindiffuser_subj07, \
+    final_subj07_pretrained_40sess_24bs, \
+    takagi_subj07, \
+    iCNN_subj07, \
+    subj07_40sess_hypatia_mirage2, \
+    subj07_40sess_hypatia_mirage_no_retrieval, \
+    subj07_40sess_hypatia_mirage" \
     --data_path ../dataset \
     --output_path ../figs/ \
-    --criteria "InceptionV3,CLIP,EffNet-B,SwAV" \
-    --output_file methods_scatter_nsd_general_rank_order_s1_high_level
-
-python plots_across_methods.py \
-    --methods "mindeye1_subj01, \
-    braindiffuser_subj01, \
-    final_subj01_pretrained_40sess_24bs, \
-    subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions, \
-    subj01_40sess_hypatia_ridge_svc_0.70_strength_fs_fcon_short_captions_ni_16_retrieval, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_2, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_3, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_4, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_5, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_6, \
-    subj01_40sess_hypatia_ridge_scv_nsd_general_RO_rois_7" \
-    --data_path ../dataset \
-    --output_path ../figs/ \
-    --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5)" \
-    --output_file methods_scatter_nsd_general_rank_order_s1_low_level
+    --subjs 1,2,5,7 \
+    --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
+    --output_file methods_scatter_final
