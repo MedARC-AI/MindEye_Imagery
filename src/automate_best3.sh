@@ -49,8 +49,6 @@ for subj in 5; do
 
     model_name="subj0${subj}_40sess_hypatia_mirage2"
 
-    sleep 1h
-
     python Train.py \
         --data_path=../dataset \
         --cache_dir=../cache \
