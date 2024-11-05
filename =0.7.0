@@ -1,0 +1,466 @@
+Collecting numpy
+  Using cached numpy-2.1.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.3 MB)
+Collecting matplotlib==3.8.2
+  Using cached matplotlib-3.8.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.6 MB)
+Collecting jupyter
+  Using cached jupyter-1.1.1-py2.py3-none-any.whl (2.7 kB)
+Collecting jupyterlab_nvdashboard
+  Using cached jupyterlab_nvdashboard-0.11.0-py3-none-any.whl (172 kB)
+Collecting jupyterlab
+  Using cached jupyterlab-4.2.5-py3-none-any.whl (11.6 MB)
+Collecting tqdm
+  Using cached tqdm-4.66.6-py3-none-any.whl (78 kB)
+Collecting scikit-learn
+  Using cached scikit_learn-1.5.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.3 MB)
+Collecting scikit-image==0.22.0
+  Using cached scikit_image-0.22.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (14.7 MB)
+Collecting accelerate==0.24.1
+  Using cached accelerate-0.24.1-py3-none-any.whl (261 kB)
+Collecting webdataset==0.2.73
+  Using cached webdataset-0.2.73-py3-none-any.whl (65 kB)
+Collecting pandas==2.2.0
+  Using cached pandas-2.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.0 MB)
+Collecting einops
+  Using cached einops-0.8.0-py3-none-any.whl (43 kB)
+Collecting ftfy
+  Using cached ftfy-6.3.1-py3-none-any.whl (44 kB)
+Collecting regex
+  Using cached regex-2024.9.11-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (782 kB)
+Collecting kornia==0.7.1
+  Using cached kornia-0.7.1-py2.py3-none-any.whl (756 kB)
+Collecting h5py==3.10.0
+  Using cached h5py-3.10.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.8 MB)
+Collecting open_clip_torch
+  Using cached open_clip_torch-2.29.0-py3-none-any.whl (1.5 MB)
+Collecting torchvision==0.16.0
+  Using cached torchvision-0.16.0-cp310-cp310-manylinux1_x86_64.whl (6.9 MB)
+Collecting torch==2.1.0
+  Using cached torch-2.1.0-cp310-cp310-manylinux1_x86_64.whl (670.2 MB)
+Collecting transformers==4.37.2
+  Using cached transformers-4.37.2-py3-none-any.whl (8.4 MB)
+Collecting xformers
+  Using cached xformers-0.0.28.post2-cp310-cp310-manylinux_2_28_x86_64.whl (16.7 MB)
+Collecting torchmetrics==1.3.0.post0
+  Using cached torchmetrics-1.3.0.post0-py3-none-any.whl (840 kB)
+Collecting diffusers==0.30.3
+  Using cached diffusers-0.30.3-py3-none-any.whl (2.7 MB)
+Collecting deepspeed==0.13.1
+  Using cached deepspeed-0.13.1.tar.gz (1.3 MB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting wandb
+  Using cached wandb-0.18.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.0 MB)
+Collecting omegaconf==2.3.0
+  Using cached omegaconf-2.3.0-py3-none-any.whl (79 kB)
+Collecting pytorch-lightning==2.0.1
+  Using cached pytorch_lightning-2.0.1-py3-none-any.whl (716 kB)
+Collecting sentence-transformers==2.5.1
+  Using cached sentence_transformers-2.5.1-py3-none-any.whl (156 kB)
+Collecting evaluate==0.4.1
+  Using cached evaluate-0.4.1-py3-none-any.whl (84 kB)
+Collecting nltk==3.8.1
+  Using cached nltk-3.8.1-py3-none-any.whl (1.5 MB)
+Collecting rouge_score==0.1.2
+  Using cached rouge_score-0.1.2.tar.gz (17 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting umap==0.1.1
+  Using cached umap-0.1.1.tar.gz (3.2 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting nibabel==5.2.1
+  Using cached nibabel-5.2.1-py3-none-any.whl (3.3 MB)
+Collecting insightface==0.7.3
+  Using cached insightface-0.7.3-cp310-cp310-linux_x86_64.whl
+Collecting opencv-python==4.8.1.78
+  Using cached opencv_python-4.8.1.78-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (61.7 MB)
+Collecting munch==4.0.0
+  Using cached munch-4.0.0-py2.py3-none-any.whl (9.9 kB)
+Collecting onnxruntime==1.16.3
+  Using cached onnxruntime-1.16.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (6.4 MB)
+Collecting onnx2torch==1.5.13
+  Using cached onnx2torch-1.5.13-py3-none-any.whl (78 kB)
+Collecting numpy
+  Using cached numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+Collecting contourpy>=1.0.1
+  Using cached contourpy-1.3.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (322 kB)
+Collecting pillow>=8
+  Using cached pillow-11.0.0-cp310-cp310-manylinux_2_28_x86_64.whl (4.4 MB)
+Collecting python-dateutil>=2.7
+  Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Collecting kiwisolver>=1.3.1
+  Using cached kiwisolver-1.4.7-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl (1.6 MB)
+Collecting pyparsing>=2.3.1
+  Using cached pyparsing-3.2.0-py3-none-any.whl (106 kB)
+Collecting fonttools>=4.22.0
+  Using cached fonttools-4.54.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.6 MB)
+Collecting cycler>=0.10
+  Using cached cycler-0.12.1-py3-none-any.whl (8.3 kB)
+Collecting packaging>=20.0
+  Using cached packaging-24.1-py3-none-any.whl (53 kB)
+Collecting lazy_loader>=0.3
+  Using cached lazy_loader-0.4-py3-none-any.whl (12 kB)
+Collecting scipy>=1.8
+  Using cached scipy-1.14.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (41.2 MB)
+Collecting tifffile>=2022.8.12
+  Using cached tifffile-2024.9.20-py3-none-any.whl (228 kB)
+Collecting imageio>=2.27
+  Using cached imageio-2.36.0-py3-none-any.whl (315 kB)
+Collecting networkx>=2.8
+  Using cached networkx-3.4.2-py3-none-any.whl (1.7 MB)
+Collecting psutil
+  Using cached psutil-6.1.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (287 kB)
+Collecting huggingface-hub
+  Using cached huggingface_hub-0.26.2-py3-none-any.whl (447 kB)
+Collecting pyyaml
+  Using cached PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (751 kB)
+Collecting braceexpand
+  Using cached braceexpand-0.1.7-py2.py3-none-any.whl (5.9 kB)
+Collecting tzdata>=2022.7
+  Using cached tzdata-2024.2-py2.py3-none-any.whl (346 kB)
+Collecting pytz>=2020.1
+  Using cached pytz-2024.2-py2.py3-none-any.whl (508 kB)
+Collecting requests
+  Using cached requests-2.32.3-py3-none-any.whl (64 kB)
+Collecting nvidia-cudnn-cu12==8.9.2.26
+  Using cached nvidia_cudnn_cu12-8.9.2.26-py3-none-manylinux1_x86_64.whl (731.7 MB)
+Collecting nvidia-cublas-cu12==12.1.3.1
+  Using cached nvidia_cublas_cu12-12.1.3.1-py3-none-manylinux1_x86_64.whl (410.6 MB)
+Collecting nvidia-nccl-cu12==2.18.1
+  Using cached nvidia_nccl_cu12-2.18.1-py3-none-manylinux1_x86_64.whl (209.8 MB)
+Collecting nvidia-nvtx-cu12==12.1.105
+  Using cached nvidia_nvtx_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (99 kB)
+Collecting jinja2
+  Using cached jinja2-3.1.4-py3-none-any.whl (133 kB)
+Collecting nvidia-cuda-cupti-cu12==12.1.105
+  Using cached nvidia_cuda_cupti_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (14.1 MB)
+Collecting nvidia-cusolver-cu12==11.4.5.107
+  Using cached nvidia_cusolver_cu12-11.4.5.107-py3-none-manylinux1_x86_64.whl (124.2 MB)
+Collecting nvidia-cuda-nvrtc-cu12==12.1.105
+  Using cached nvidia_cuda_nvrtc_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (23.7 MB)
+Collecting triton==2.1.0
+  Using cached triton-2.1.0-0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (89.2 MB)
+Collecting fsspec
+  Using cached fsspec-2024.10.0-py3-none-any.whl (179 kB)
+Collecting nvidia-cufft-cu12==11.0.2.54
+  Using cached nvidia_cufft_cu12-11.0.2.54-py3-none-manylinux1_x86_64.whl (121.6 MB)
+Collecting filelock
+  Using cached filelock-3.16.1-py3-none-any.whl (16 kB)
+Collecting sympy
+  Using cached sympy-1.13.3-py3-none-any.whl (6.2 MB)
+Collecting typing-extensions
+  Using cached typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+Collecting nvidia-cuda-runtime-cu12==12.1.105
+  Using cached nvidia_cuda_runtime_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (823 kB)
+Collecting nvidia-curand-cu12==10.3.2.106
+  Using cached nvidia_curand_cu12-10.3.2.106-py3-none-manylinux1_x86_64.whl (56.5 MB)
+Collecting nvidia-cusparse-cu12==12.1.0.106
+  Using cached nvidia_cusparse_cu12-12.1.0.106-py3-none-manylinux1_x86_64.whl (196.0 MB)
+Collecting safetensors>=0.4.1
+  Using cached safetensors-0.4.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (435 kB)
+Collecting tokenizers<0.19,>=0.14
+  Using cached tokenizers-0.15.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.6 MB)
+Collecting lightning-utilities>=0.8.0
+  Using cached lightning_utilities-0.11.8-py3-none-any.whl (26 kB)
+Collecting importlib-metadata
+  Using cached importlib_metadata-8.5.0-py3-none-any.whl (26 kB)
+Collecting hjson
+  Using cached hjson-3.1.0-py3-none-any.whl (54 kB)
+Collecting ninja
+  Using cached ninja-1.11.1.1-py2.py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl (307 kB)
+Collecting py-cpuinfo
+  Using cached py_cpuinfo-9.0.0-py3-none-any.whl (22 kB)
+Collecting pydantic
+  Using cached pydantic-2.9.2-py3-none-any.whl (434 kB)
+Collecting pynvml
+  Using cached pynvml-11.5.3-py3-none-any.whl (53 kB)
+Collecting antlr4-python3-runtime==4.9.*
+  Using cached antlr4_python3_runtime-4.9.3-py3-none-any.whl
+Collecting xxhash
+  Using cached xxhash-3.5.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (194 kB)
+Collecting datasets>=2.0.0
+  Using cached datasets-3.0.2-py3-none-any.whl (472 kB)
+Collecting responses<0.19
+  Using cached responses-0.18.0-py3-none-any.whl (38 kB)
+Collecting dill
+  Using cached dill-0.3.9-py3-none-any.whl (119 kB)
+Collecting multiprocess
+  Using cached multiprocess-0.70.17-py310-none-any.whl (134 kB)
+Collecting click
+  Using cached click-8.1.7-py3-none-any.whl (97 kB)
+Collecting joblib
+  Using cached joblib-1.4.2-py3-none-any.whl (301 kB)
+Collecting absl-py
+  Using cached absl_py-2.1.0-py3-none-any.whl (133 kB)
+Collecting six>=1.14.0
+  Using cached six-1.16.0-py2.py3-none-any.whl (11 kB)
+Collecting prettytable
+  Using cached prettytable-3.11.0-py3-none-any.whl (28 kB)
+Collecting easydict
+  Using cached easydict-1.13-py3-none-any.whl (6.8 kB)
+Collecting cython
+  Using cached Cython-3.0.11-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.6 MB)
+Collecting onnx
+  Using cached onnx-1.17.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.0 MB)
+Collecting albumentations
+  Using cached albumentations-1.4.20-py3-none-any.whl (225 kB)
+Collecting coloredlogs
+  Using cached coloredlogs-15.0.1-py2.py3-none-any.whl (46 kB)
+Collecting protobuf
+  Using cached protobuf-5.28.3-cp38-abi3-manylinux2014_x86_64.whl (316 kB)
+Collecting flatbuffers
+  Using cached flatbuffers-24.3.25-py2.py3-none-any.whl (26 kB)
+Collecting nvidia-nvjitlink-cu12
+  Using cached nvidia_nvjitlink_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl (19.7 MB)
+Collecting jupyter-console
+  Using cached jupyter_console-6.6.3-py3-none-any.whl (24 kB)
+Collecting nbconvert
+  Using cached nbconvert-7.16.4-py3-none-any.whl (257 kB)
+Collecting ipywidgets
+  Using cached ipywidgets-8.1.5-py3-none-any.whl (139 kB)
+Collecting notebook
+  Using cached notebook-7.2.2-py3-none-any.whl (5.0 MB)
+Collecting ipykernel
+  Using cached ipykernel-6.29.5-py3-none-any.whl (117 kB)
+Collecting jupyter-lsp>=2.0.0
+  Using cached jupyter_lsp-2.2.5-py3-none-any.whl (69 kB)
+Collecting tomli>=1.2.2
+  Using cached tomli-2.0.2-py3-none-any.whl (13 kB)
+Collecting async-lru>=1.0.0
+  Using cached async_lru-2.0.4-py3-none-any.whl (6.1 kB)
+Collecting jupyter-core
+  Using cached jupyter_core-5.7.2-py3-none-any.whl (28 kB)
+Collecting traitlets
+  Using cached traitlets-5.14.3-py3-none-any.whl (85 kB)
+Collecting jupyter-server<3,>=2.4.0
+  Using cached jupyter_server-2.14.2-py3-none-any.whl (383 kB)
+Collecting notebook-shim>=0.2
+  Using cached notebook_shim-0.2.4-py3-none-any.whl (13 kB)
+Collecting httpx>=0.25.0
+  Using cached httpx-0.27.2-py3-none-any.whl (76 kB)
+Collecting tornado>=6.2.0
+  Using cached tornado-6.4.1-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (436 kB)
+Requirement already satisfied: setuptools>=40.1.0 in ./mei-env/lib/python3.10/site-packages (from jupyterlab) (65.5.0)
+Collecting jupyterlab-server<3,>=2.27.1
+  Using cached jupyterlab_server-2.27.3-py3-none-any.whl (59 kB)
+Collecting threadpoolctl>=3.1.0
+  Using cached threadpoolctl-3.5.0-py3-none-any.whl (18 kB)
+Requirement already satisfied: wcwidth in ./mei-env/lib/python3.10/site-packages (from ftfy) (0.2.13)
+Collecting timm
+  Using cached timm-1.0.11-py3-none-any.whl (2.3 MB)
+Collecting xformers
+  Using cached xformers-0.0.28.post1-cp310-cp310-manylinux_2_28_x86_64.whl (16.7 MB)
+  Using cached xformers-0.0.28-cp310-cp310-manylinux_2_28_x86_64.whl (16.7 MB)
+  Using cached xformers-0.0.27.post2-cp310-cp310-manylinux2014_x86_64.whl (20.8 MB)
+  Using cached xformers-0.0.27.post1-cp310-cp310-manylinux2014_x86_64.whl (20.8 MB)
+  Using cached xformers-0.0.27-cp310-cp310-manylinux2014_x86_64.whl (164.1 MB)
+  Using cached xformers-0.0.26.post1-cp310-cp310-manylinux2014_x86_64.whl (222.7 MB)
+  Using cached xformers-0.0.25.post1-cp310-cp310-manylinux2014_x86_64.whl (222.5 MB)
+  Using cached xformers-0.0.25-cp310-cp310-manylinux2014_x86_64.whl (222.5 MB)
+  Using cached xformers-0.0.24-cp310-cp310-manylinux2014_x86_64.whl (218.2 MB)
+  Using cached xformers-0.0.23.post1-cp310-cp310-manylinux2014_x86_64.whl (213.0 MB)
+  Using cached xformers-0.0.23-cp310-cp310-manylinux2014_x86_64.whl (213.0 MB)
+  Using cached xformers-0.0.22.post7-cp310-cp310-manylinux2014_x86_64.whl (211.8 MB)
+Collecting platformdirs
+  Using cached platformdirs-4.3.6-py3-none-any.whl (18 kB)
+Collecting docker-pycreds>=0.4.0
+  Using cached docker_pycreds-0.4.0-py2.py3-none-any.whl (9.0 kB)
+Collecting setproctitle
+  Using cached setproctitle-1.3.3-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (30 kB)
+Collecting gitpython!=3.1.29,>=1.0.0
+  Using cached GitPython-3.1.43-py3-none-any.whl (207 kB)
+Collecting sentry-sdk>=2.0.0
+  Using cached sentry_sdk-2.17.0-py2.py3-none-any.whl (314 kB)
+Collecting multiprocess
+  Using cached multiprocess-0.70.16-py310-none-any.whl (134 kB)
+Collecting pyarrow>=15.0.0
+  Using cached pyarrow-18.0.0-cp310-cp310-manylinux_2_28_x86_64.whl (40.0 MB)
+Collecting aiohttp
+  Using cached aiohttp-3.10.10-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.2 MB)
+Collecting fsspec[http]>2021.06.0
+  Using cached fsspec-2024.9.0-py3-none-any.whl (179 kB)
+Collecting dill
+  Using cached dill-0.3.8-py3-none-any.whl (116 kB)
+Collecting gitdb<5,>=4.0.1
+  Using cached gitdb-4.0.11-py3-none-any.whl (62 kB)
+Collecting sniffio
+  Using cached sniffio-1.3.1-py3-none-any.whl (10 kB)
+Collecting anyio
+  Using cached anyio-4.6.2.post1-py3-none-any.whl (90 kB)
+Collecting httpcore==1.*
+  Using cached httpcore-1.0.6-py3-none-any.whl (78 kB)
+Collecting idna
+  Using cached idna-3.10-py3-none-any.whl (70 kB)
+Collecting certifi
+  Using cached certifi-2024.8.30-py3-none-any.whl (167 kB)
+Collecting h11<0.15,>=0.13
+  Using cached h11-0.14.0-py3-none-any.whl (58 kB)
+Collecting ipython>=7.23.1
+  Using cached ipython-8.29.0-py3-none-any.whl (819 kB)
+Collecting nest-asyncio
+  Using cached nest_asyncio-1.6.0-py3-none-any.whl (5.2 kB)
+Collecting jupyter-client>=6.1.12
+  Using cached jupyter_client-8.6.3-py3-none-any.whl (106 kB)
+Collecting pyzmq>=24
+  Using cached pyzmq-26.2.0-cp310-cp310-manylinux_2_28_x86_64.whl (868 kB)
+Collecting debugpy>=1.6.5
+  Using cached debugpy-1.8.7-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.5 MB)
+Collecting matplotlib-inline>=0.1
+  Using cached matplotlib_inline-0.1.7-py3-none-any.whl (9.9 kB)
+Collecting comm>=0.1.1
+  Using cached comm-0.2.2-py3-none-any.whl (7.2 kB)
+Collecting MarkupSafe>=2.0
+  Using cached MarkupSafe-3.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20 kB)
+Collecting jupyter-events>=0.9.0
+  Using cached jupyter_events-0.10.0-py3-none-any.whl (18 kB)
+Collecting terminado>=0.8.3
+  Using cached terminado-0.18.1-py3-none-any.whl (14 kB)
+Collecting websocket-client>=1.7
+  Using cached websocket_client-1.8.0-py3-none-any.whl (58 kB)
+Collecting jupyter-server-terminals>=0.4.4
+  Using cached jupyter_server_terminals-0.5.3-py3-none-any.whl (13 kB)
+Collecting argon2-cffi>=21.1
+  Using cached argon2_cffi-23.1.0-py3-none-any.whl (15 kB)
+Collecting send2trash>=1.8.2
+  Using cached Send2Trash-1.8.3-py3-none-any.whl (18 kB)
+Collecting nbformat>=5.3.0
+  Using cached nbformat-5.10.4-py3-none-any.whl (78 kB)
+Collecting overrides>=5.0
+  Using cached overrides-7.7.0-py3-none-any.whl (17 kB)
+Collecting prometheus-client>=0.9
+  Using cached prometheus_client-0.21.0-py3-none-any.whl (54 kB)
+Collecting jsonschema>=4.18.0
+  Using cached jsonschema-4.23.0-py3-none-any.whl (88 kB)
+Collecting babel>=2.10
+  Using cached babel-2.16.0-py3-none-any.whl (9.6 MB)
+Collecting json5>=0.9.0
+  Using cached json5-0.9.25-py3-none-any.whl (30 kB)
+Collecting bleach!=5.0.0
+  Using cached bleach-6.1.0-py3-none-any.whl (162 kB)
+Collecting tinycss2
+  Using cached tinycss2-1.4.0-py3-none-any.whl (26 kB)
+Collecting beautifulsoup4
+  Using cached beautifulsoup4-4.12.3-py3-none-any.whl (147 kB)
+Collecting jupyterlab-pygments
+  Using cached jupyterlab_pygments-0.3.0-py3-none-any.whl (15 kB)
+Collecting defusedxml
+  Using cached defusedxml-0.7.1-py2.py3-none-any.whl (25 kB)
+Collecting pygments>=2.4.1
+  Using cached pygments-2.18.0-py3-none-any.whl (1.2 MB)
+Collecting mistune<4,>=2.0.3
+  Using cached mistune-3.0.2-py3-none-any.whl (47 kB)
+Collecting pandocfilters>=1.4.1
+  Using cached pandocfilters-1.5.1-py2.py3-none-any.whl (8.7 kB)
+Collecting nbclient>=0.5.0
+  Using cached nbclient-0.10.0-py3-none-any.whl (25 kB)
+Collecting urllib3<3,>=1.21.1
+  Using cached urllib3-2.2.3-py3-none-any.whl (126 kB)
+Collecting charset-normalizer<4,>=2
+  Using cached charset_normalizer-3.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (144 kB)
+Collecting albucore==0.0.19
+  Using cached albucore-0.0.19-py3-none-any.whl (11 kB)
+Collecting eval-type-backport
+  Using cached eval_type_backport-0.2.0-py3-none-any.whl (5.9 kB)
+Collecting opencv-python-headless>=4.9.0.80
+  Using cached opencv_python_headless-4.10.0.84-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (49.9 MB)
+Collecting stringzilla>=3.10.4
+  Using cached stringzilla-3.10.5-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_28_x86_64.whl (291 kB)
+Collecting pydantic-core==2.23.4
+  Using cached pydantic_core-2.23.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+Collecting annotated-types>=0.6.0
+  Using cached annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Collecting humanfriendly>=9.1
+  Using cached humanfriendly-10.0-py2.py3-none-any.whl (86 kB)
+Collecting zipp>=3.20
+  Using cached zipp-3.20.2-py3-none-any.whl (9.2 kB)
+Collecting jupyterlab-widgets~=3.0.12
+  Using cached jupyterlab_widgets-3.0.13-py3-none-any.whl (214 kB)
+Collecting widgetsnbextension~=4.0.12
+  Using cached widgetsnbextension-4.0.13-py3-none-any.whl (2.3 MB)
+Collecting prompt-toolkit>=3.0.30
+  Using cached prompt_toolkit-3.0.48-py3-none-any.whl (386 kB)
+Collecting mpmath<1.4,>=1.1.0
+  Using cached mpmath-1.3.0-py3-none-any.whl (536 kB)
+Collecting aiosignal>=1.1.2
+  Using cached aiosignal-1.3.1-py3-none-any.whl (7.6 kB)
+Collecting frozenlist>=1.1.1
+  Using cached frozenlist-1.5.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+Collecting aiohappyeyeballs>=2.3.0
+  Using cached aiohappyeyeballs-2.4.3-py3-none-any.whl (14 kB)
+Collecting multidict<7.0,>=4.5
+  Using cached multidict-6.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (124 kB)
+Collecting attrs>=17.3.0
+  Using cached attrs-24.2.0-py3-none-any.whl (63 kB)
+Collecting yarl<2.0,>=1.12.0
+  Using cached yarl-1.17.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (318 kB)
+Collecting async-timeout<5.0,>=4.0
+  Using cached async_timeout-4.0.3-py3-none-any.whl (5.7 kB)
+Collecting exceptiongroup>=1.0.2
+  Using cached exceptiongroup-1.2.2-py3-none-any.whl (16 kB)
+Collecting argon2-cffi-bindings
+  Using cached argon2_cffi_bindings-21.2.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (86 kB)
+Requirement already satisfied: webencodings in ./mei-env/lib/python3.10/site-packages (from bleach!=5.0.0->nbconvert->jupyter) (0.5.1)
+Collecting smmap<6,>=3.0.1
+  Using cached smmap-5.0.1-py3-none-any.whl (24 kB)
+Collecting decorator
+  Using cached decorator-5.1.1-py3-none-any.whl (9.1 kB)
+Collecting pexpect>4.3
+  Using cached pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
+Collecting jedi>=0.16
+  Using cached jedi-0.19.1-py2.py3-none-any.whl (1.6 MB)
+Collecting stack-data
+  Using cached stack_data-0.6.3-py3-none-any.whl (24 kB)
+Collecting referencing>=0.28.4
+  Using cached referencing-0.35.1-py3-none-any.whl (26 kB)
+Collecting rpds-py>=0.7.1
+  Using cached rpds_py-0.20.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (354 kB)
+Collecting jsonschema-specifications>=2023.03.6
+  Using cached jsonschema_specifications-2024.10.1-py3-none-any.whl (18 kB)
+Collecting python-json-logger>=2.0.4
+  Using cached python_json_logger-2.0.7-py3-none-any.whl (8.1 kB)
+Collecting rfc3986-validator>=0.1.1
+  Using cached rfc3986_validator-0.1.1-py2.py3-none-any.whl (4.2 kB)
+Collecting rfc3339-validator
+  Using cached rfc3339_validator-0.1.4-py2.py3-none-any.whl (3.5 kB)
+Collecting fastjsonschema>=2.15
+  Using cached fastjsonschema-2.20.0-py3-none-any.whl (23 kB)
+Collecting ptyprocess
+  Using cached ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
+Collecting soupsieve>1.2
+  Using cached soupsieve-2.6-py3-none-any.whl (36 kB)
+Collecting parso<0.9.0,>=0.8.3
+  Using cached parso-0.8.4-py2.py3-none-any.whl (103 kB)
+Collecting webcolors>=24.6.0
+  Using cached webcolors-24.8.0-py3-none-any.whl (15 kB)
+Collecting fqdn
+  Using cached fqdn-1.5.1-py3-none-any.whl (9.1 kB)
+Collecting uri-template
+  Using cached uri_template-1.3.0-py3-none-any.whl (11 kB)
+Collecting jsonpointer>1.13
+  Using cached jsonpointer-3.0.0-py2.py3-none-any.whl (7.6 kB)
+Collecting isoduration
+  Using cached isoduration-20.11.0-py3-none-any.whl (11 kB)
+Collecting propcache>=0.2.0
+  Using cached propcache-0.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (208 kB)
+Collecting cffi>=1.0.1
+  Using cached cffi-1.17.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (446 kB)
+Collecting executing>=1.2.0
+  Using cached executing-2.1.0-py2.py3-none-any.whl (25 kB)
+Collecting asttokens>=2.1.0
+  Using cached asttokens-2.4.1-py2.py3-none-any.whl (27 kB)
+Collecting pure-eval
+  Using cached pure_eval-0.2.3-py3-none-any.whl (11 kB)
+Collecting pycparser
+  Using cached pycparser-2.22-py3-none-any.whl (117 kB)
+Collecting arrow>=0.15.0
+  Using cached arrow-1.3.0-py3-none-any.whl (66 kB)
+Collecting types-python-dateutil>=2.8.10
+  Using cached types_python_dateutil-2.9.0.20241003-py3-none-any.whl (9.7 kB)
+Installing collected packages: umap, stringzilla, pytz, py-cpuinfo, pure-eval, ptyprocess, ninja, mpmath, hjson, flatbuffers, fastjsonschema, easydict, braceexpand, antlr4-python3-runtime, zipp, xxhash, widgetsnbextension, websocket-client, webcolors, urllib3, uri-template, tzdata, typing-extensions, types-python-dateutil, traitlets, tqdm, tornado, tomli, tinycss2, threadpoolctl, sympy, soupsieve, sniffio, smmap, six, setproctitle, send2trash, safetensors, rpds-py, rfc3986-validator, regex, pyzmq, pyyaml, python-json-logger, pyparsing, pynvml, pygments, pycparser, pyarrow, psutil, protobuf, propcache, prompt-toolkit, prometheus-client, prettytable, platformdirs, pillow, pexpect, parso, pandocfilters, packaging, overrides, nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpy, networkx, nest-asyncio, munch, mistune, MarkupSafe, kiwisolver, jupyterlab-widgets, jupyterlab-pygments, jsonpointer, json5, joblib, idna, humanfriendly, h11, ftfy, fsspec, frozenlist, fqdn, fonttools, filelock, executing, exceptiongroup, eval-type-backport, einops, dill, defusedxml, decorator, debugpy, cython, cycler, click, charset-normalizer, certifi, babel, attrs, async-timeout, annotated-types, aiohappyeyeballs, absl-py, webdataset, triton, tifffile, terminado, sentry-sdk, scipy, rfc3339-validator, requests, referencing, python-dateutil, pydantic-core, opencv-python-headless, opencv-python, onnx, omegaconf, nvidia-cusparse-cu12, nvidia-cudnn-cu12, nltk, nibabel, multiprocess, multidict, matplotlib-inline, lightning-utilities, lazy_loader, jupyter-core, jinja2, jedi, importlib-metadata, imageio, httpcore, h5py, gitdb, docker-pycreds, contourpy, comm, coloredlogs, cffi, bleach, beautifulsoup4, async-lru, asttokens, anyio, aiosignal, yarl, stack-data, scikit-learn, scikit-image, rouge_score, responses, pydantic, pandas, onnxruntime, nvidia-cusolver-cu12, matplotlib, jupyter-server-terminals, jupyter-client, jsonschema-specifications, huggingface-hub, httpx, gitpython, arrow, argon2-cffi-bindings, albucore, wandb, torch, tokenizers, jsonschema, isoduration, ipython, diffusers, argon2-cffi, albumentations, aiohttp, xformers, transformers, torchvision, torchmetrics, nbformat, kornia, ipywidgets, ipykernel, insightface, deepspeed, accelerate, timm, sentence-transformers, pytorch-lightning, onnx2torch, nbclient, jupyter-events, jupyter-console, datasets, open_clip_torch, nbconvert, evaluate, jupyter-server, notebook-shim, jupyterlab-server, jupyter-lsp, jupyterlab, notebook, jupyterlab_nvdashboard, jupyter
+  Running setup.py install for umap: started
+  Running setup.py install for umap: finished with status 'done'
+  Running setup.py install for rouge_score: started
+  Running setup.py install for rouge_score: finished with status 'done'
+  Running setup.py install for deepspeed: started
+  Running setup.py install for deepspeed: finished with status 'done'
+Successfully installed MarkupSafe-3.0.2 absl-py-2.1.0 accelerate-0.24.1 aiohappyeyeballs-2.4.3 aiohttp-3.10.10 aiosignal-1.3.1 albucore-0.0.19 albumentations-1.4.20 annotated-types-0.7.0 antlr4-python3-runtime-4.9.3 anyio-4.6.2.post1 argon2-cffi-23.1.0 argon2-cffi-bindings-21.2.0 arrow-1.3.0 asttokens-2.4.1 async-lru-2.0.4 async-timeout-4.0.3 attrs-24.2.0 babel-2.16.0 beautifulsoup4-4.12.3 bleach-6.1.0 braceexpand-0.1.7 certifi-2024.8.30 cffi-1.17.1 charset-normalizer-3.4.0 click-8.1.7 coloredlogs-15.0.1 comm-0.2.2 contourpy-1.3.0 cycler-0.12.1 cython-3.0.11 datasets-3.0.2 debugpy-1.8.7 decorator-5.1.1 deepspeed-0.13.1 defusedxml-0.7.1 diffusers-0.30.3 dill-0.3.8 docker-pycreds-0.4.0 easydict-1.13 einops-0.8.0 eval-type-backport-0.2.0 evaluate-0.4.1 exceptiongroup-1.2.2 executing-2.1.0 fastjsonschema-2.20.0 filelock-3.16.1 flatbuffers-24.3.25 fonttools-4.54.1 fqdn-1.5.1 frozenlist-1.5.0 fsspec-2024.9.0 ftfy-6.3.1 gitdb-4.0.11 gitpython-3.1.43 h11-0.14.0 h5py-3.10.0 hjson-3.1.0 httpcore-1.0.6 httpx-0.27.2 huggingface-hub-0.26.2 humanfriendly-10.0 idna-3.10 imageio-2.36.0 importlib-metadata-8.5.0 insightface-0.7.3 ipykernel-6.29.5 ipython-8.29.0 ipywidgets-8.1.5 isoduration-20.11.0 jedi-0.19.1 jinja2-3.1.4 joblib-1.4.2 json5-0.9.25 jsonpointer-3.0.0 jsonschema-4.23.0 jsonschema-specifications-2024.10.1 jupyter-1.1.1 jupyter-client-8.6.3 jupyter-console-6.6.3 jupyter-core-5.7.2 jupyter-events-0.10.0 jupyter-lsp-2.2.5 jupyter-server-2.14.2 jupyter-server-terminals-0.5.3 jupyterlab-4.2.5 jupyterlab-pygments-0.3.0 jupyterlab-server-2.27.3 jupyterlab-widgets-3.0.13 jupyterlab_nvdashboard-0.11.0 kiwisolver-1.4.7 kornia-0.7.1 lazy_loader-0.4 lightning-utilities-0.11.8 matplotlib-3.8.2 matplotlib-inline-0.1.7 mistune-3.0.2 mpmath-1.3.0 multidict-6.1.0 multiprocess-0.70.16 munch-4.0.0 nbclient-0.10.0 nbconvert-7.16.4 nbformat-5.10.4 nest-asyncio-1.6.0 networkx-3.4.2 nibabel-5.2.1 ninja-1.11.1.1 nltk-3.8.1 notebook-7.2.2 notebook-shim-0.2.4 numpy-1.26.4 nvidia-cublas-cu12-12.1.3.1 nvidia-cuda-cupti-cu12-12.1.105 nvidia-cuda-nvrtc-cu12-12.1.105 nvidia-cuda-runtime-cu12-12.1.105 nvidia-cudnn-cu12-8.9.2.26 nvidia-cufft-cu12-11.0.2.54 nvidia-curand-cu12-10.3.2.106 nvidia-cusolver-cu12-11.4.5.107 nvidia-cusparse-cu12-12.1.0.106 nvidia-nccl-cu12-2.18.1 nvidia-nvjitlink-cu12-12.6.77 nvidia-nvtx-cu12-12.1.105 omegaconf-2.3.0 onnx-1.17.0 onnx2torch-1.5.13 onnxruntime-1.16.3 open_clip_torch-2.29.0 opencv-python-4.8.1.78 opencv-python-headless-4.10.0.84 overrides-7.7.0 packaging-24.1 pandas-2.2.0 pandocfilters-1.5.1 parso-0.8.4 pexpect-4.9.0 pillow-11.0.0 platformdirs-4.3.6 prettytable-3.11.0 prometheus-client-0.21.0 prompt-toolkit-3.0.48 propcache-0.2.0 protobuf-5.28.3 psutil-6.1.0 ptyprocess-0.7.0 pure-eval-0.2.3 py-cpuinfo-9.0.0 pyarrow-18.0.0 pycparser-2.22 pydantic-2.9.2 pydantic-core-2.23.4 pygments-2.18.0 pynvml-11.5.3 pyparsing-3.2.0 python-dateutil-2.9.0.post0 python-json-logger-2.0.7 pytorch-lightning-2.0.1 pytz-2024.2 pyyaml-6.0.2 pyzmq-26.2.0 referencing-0.35.1 regex-2024.9.11 requests-2.32.3 responses-0.18.0 rfc3339-validator-0.1.4 rfc3986-validator-0.1.1 rouge_score-0.1.2 rpds-py-0.20.0 safetensors-0.4.5 scikit-image-0.22.0 scikit-learn-1.5.2 scipy-1.14.1 send2trash-1.8.3 sentence-transformers-2.5.1 sentry-sdk-2.17.0 setproctitle-1.3.3 six-1.16.0 smmap-5.0.1 sniffio-1.3.1 soupsieve-2.6 stack-data-0.6.3 stringzilla-3.10.5 sympy-1.13.3 terminado-0.18.1 threadpoolctl-3.5.0 tifffile-2024.9.20 timm-1.0.11 tinycss2-1.4.0 tokenizers-0.15.2 tomli-2.0.2 torch-2.1.0 torchmetrics-1.3.0.post0 torchvision-0.16.0 tornado-6.4.1 tqdm-4.66.6 traitlets-5.14.3 transformers-4.37.2 triton-2.1.0 types-python-dateutil-2.9.0.20241003 typing-extensions-4.12.2 tzdata-2024.2 umap-0.1.1 uri-template-1.3.0 urllib3-2.2.3 wandb-0.18.5 webcolors-24.8.0 webdataset-0.2.73 websocket-client-1.8.0 widgetsnbextension-4.0.13 xformers-0.0.22.post7 xxhash-3.5.0 yarl-1.17.0 zipp-3.20.2
