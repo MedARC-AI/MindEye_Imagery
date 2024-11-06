@@ -603,6 +603,28 @@ def format_tiled_figure(images, captions, rows, cols, red_line_index=None, buffe
 
     return canvas
 
+def condition_average_trial_reps(x, y, cond, nest=False, trial_reps=1000):
+    idx, idx_count = np.unique(cond, return_counts=True)
+    trial_reps = min(trial_reps, idx_count.max())
+    idx_list = [np.array(cond)==i for i in np.sort(idx)]
+    if nest:
+        avg_x = torch.zeros((len(idx), trial_reps, x.shape[1]), dtype=torch.float32)
+    else:
+        avg_x = torch.zeros((len(idx), 1, x.shape[1]), dtype=torch.float32)
+    arranged_y = torch.zeros((len(idx)), y.shape[1], y.shape[2], y.shape[3])
+    for i, m in enumerate(idx_list):
+        trial_reps = min(trial_reps, len(m))
+        if nest:
+            if np.sum(m) == trial_reps:
+                avg_x[i] = x[m]
+            else:
+                avg_x[i,:max(np.sum(m), trial_reps)] = x[m][:trial_reps]
+        else:
+            avg_x[i] = torch.mean(x[m][:trial_reps], axis=0)
+        arranged_y[i] = y[m[0]]
+
+    return avg_x, y, len(idx_count)
+
 def condition_average(x, y, cond, nest=False):
     idx, idx_count = np.unique(cond, return_counts=True)
     idx_list = [np.array(cond)==i for i in np.sort(idx)]
@@ -709,7 +731,10 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
 
     # Average or nest the betas across trials
     if average or nest:
-        x, y, sample_count = condition_average(x, y, conditionals, nest=nest)
+        if num_reps != 16:
+            x, y, sample_count = condition_average_trial_reps(x, y, conditionals, nest=nest, trial_reps=num_reps)
+        else:
+            x, y, sample_count = condition_average(x, y, conditionals, nest=nest)
     else:
         x = x.reshape((x.shape[0], 1, x.shape[1]))
         y = y[conditionals]
