@@ -651,7 +651,7 @@ def condition_average_old(x, y, cond, nest=False):
 #data_root: path to where the dataset is saved.
 def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, data_root="../dataset/"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
-    img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
+    img_stim_file = os.path.join(data_root, "nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3")
     ex_file = open(img_stim_file, 'rb')
     imagery_dict = pickle.load(ex_file)
     ex_file.close()
@@ -677,7 +677,7 @@ def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_re
                                         np.logical_or(exps=='imgC_1', exps=='imgC_2'))]}
     # Load normalized betas
     if snr == -1.0:
-        x = torch.load(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery.pt").requires_grad_(False).to("cpu")
+        x = torch.load(os.path.join(data_root, f"preprocessed_data/subject{subject}/nsd_imagery.pt")).requires_grad_(False).to("cpu")
     else:
         if not os.path.exists(f"{data_root}/preprocessed_data/subject{subject}/nsd_imagery_whole_brain.pt"):
             create_whole_region_imagery_unnormalized(subject = subject, mask=False, data_path=data_root)
