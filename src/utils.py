@@ -649,7 +649,7 @@ def condition_average_old(x, y, cond, nest=False):
 #average: whether to average across trials, will produce x that is (stimuli, 1, voxels)
 #nest: whether to nest the data according to stimuli, will produce x that is (stimuli, trials, voxels)
 #data_root: path to where the dataset is saved.
-def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, samplewise=False, whole_brain=False, nsd_general=False, data_root="../dataset"):
+def load_nsd_mental_imagery(subject, mode, stimtype="all", average=False, num_reps = 16, nest=False, snr=-1, top_n_rois=-1, samplewise=False, whole_brain=False, nsd_general=False, data_root="/viscam/u/shubh/neuro/MindEye_Imagery/umn-imagery"):
     # This file has a bunch of information about the stimuli and cue associations that will make loading it easier
     img_stim_file = f"{data_root}/nsddata_stimuli/stimuli/nsdimagery_stimuli.pkl3"
     ex_file = open(img_stim_file, 'rb')
