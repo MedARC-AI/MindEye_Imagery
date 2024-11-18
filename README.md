@@ -26,26 +26,12 @@ git clone https://github.com/MedARC-AI/MIRAGE.git
 ```
 
 2. Download necessary project files from the two hugginface repositories and place them in the same folder as your git clone.
-    - https://huggingface.co/datasets/pscotti/mindeyev2
-    - https://huggingface.co/datasets/reesekneeland/MIRAGE/tree/main
+    - REMOVED FOR ANONYMITY
     
 Warning: **This will download over 300 GB of data!** You may want to only download some parts of the huggingface dataset (e.g., not all the pretrained models contained in "train_logs", only one of the preparations of brain activity—whole brain or not—whole brain betas are only necessary for SNR thresholding.)
 
-```
-cd MIRAGE
-git clone https://huggingface.co/datasets/pscotti/mindeyev2 .
-git clone https://huggingface.co/datasets/reesekneeland/MIRAGE/ .
-```
 
-or for specifically downloading only parts of the dataset (will need to edit depending on what you want to download):
-```
-from huggingface_hub import snapshot_download, hf_hub_download
-snapshot_download(repo_id="pscotti/mindeyev2", repo_type = "dataset", revision="main", allow_patterns="*.tar",
-    local_dir= "your_local_dir", local_dir_use_symlinks = False, resume_download = True)
-hf_hub_download(repo_id="pscotti/mindeyev2", filename="coco_images_224_float16.hdf5", repo_type="dataset")
-```
-
-3. Run ```. src/setup.sh``` to install a new "mei-env" virtual environment. Make sure the virtual environment is activated with "source mei-env/bin/activate".
+3. Run ```. src/setup.sh``` to install a new "mei-env" virtual environment. Make sure the virtual environment is activated with "source mirage-env/bin/activate".
 
 ## Usage
 
