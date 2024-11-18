@@ -5,7 +5,7 @@ set -e
 
 pip install --upgrade pip
 
-python -m venv mei-env
+python -m venv mirage-env
 source mei-env/bin/activate
 
 git clone https://github.com/Stability-AI/StableCascade
