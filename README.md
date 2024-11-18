@@ -1,15 +1,15 @@
-# MindEye Imagery (WIP)
+# MIRAGE
 
-This is the main working branch of MindEye Imagery. It uses the Stable Cascade diffusion model for reconstructions, and a set of Ridge regression models as the decoding backbone. 
+This is the main working branch of MIRAGE. It uses the Stable Cascade diffusion model for reconstructions, and a set of Ridge regression models as the decoding backbone. 
 
 To install the proper environment, follow `src/setup.sh`.
 
-To use this branch, you must also clone the StableCascade repo from `https://github.com/Stability-AI/StableCascade.git` into your src directory, such that it is located at `MindEye_Imagery/src/StableCascade/
+To use this branch, you must also clone the StableCascade repo from `https://github.com/Stability-AI/StableCascade.git` into your src directory, such that it is located at `MIRAGE/src/StableCascade/
 
-You will need a checkpoint for the VDVAE to use the low level pipeline, you can download the following checkpoint from our project hugginface repo(https://huggingface.co/datasets/reesekneeland/mindeye_imagery/tree/main):
-- imagenet64-iter-1600000-model-ema.th
+You will need a checkpoint for the VDVAE to use the low level pipeline, you can download the checkpoint using the following command:
+- `wget https://openaipublic.blob.core.windows.net/very-deep-vaes-assets/vdvae-assets-2/imagenet64-iter-1600000-model-ema.th`
 
-It should download the Stable Cascade models you need automatically, but if it doesn't, you can also download them from our project huggingface repo linked above, and place them into your `cache_dir`.
+It should download the Stable Cascade models you need automatically, but if it doesn't, you can also download the following files from the [stable cascade huggingface repo](https://huggingface.co/stabilityai/stable-cascade/tree/main), and place them into your `cache_dir`.
 - effnet_encoder.safetensors
 - previewer.safetensors
 - stage_a.safetensors
@@ -22,19 +22,19 @@ It should download the Stable Cascade models you need automatically, but if it d
 1. Git clone this repository:
 
 ```
-git clone https://github.com/MedARC-AI/MindEye_Imagery.git
+git clone https://github.com/MedARC-AI/MIRAGE.git
 ```
 
 2. Download necessary project files from the two hugginface repositories and place them in the same folder as your git clone.
     - https://huggingface.co/datasets/pscotti/mindeyev2
-    - https://huggingface.co/datasets/reesekneeland/mindeye_imagery
+    - https://huggingface.co/datasets/reesekneeland/MIRAGE/tree/main
     
 Warning: **This will download over 300 GB of data!** You may want to only download some parts of the huggingface dataset (e.g., not all the pretrained models contained in "train_logs", only one of the preparations of brain activity—whole brain or not—whole brain betas are only necessary for SNR thresholding.)
 
 ```
-cd MindEye_Imagery
+cd MIRAGE
 git clone https://huggingface.co/datasets/pscotti/mindeyev2 .
-git clone https://huggingface.co/datasets/reesekneeland/mindeye_imagery .
+git clone https://huggingface.co/datasets/reesekneeland/MIRAGE/ .
 ```
 
 or for specifically downloading only parts of the dataset (will need to edit depending on what you want to download):
@@ -49,11 +49,6 @@ hf_hub_download(repo_id="pscotti/mindeyev2", filename="coco_images_224_float16.h
 
 ## Usage
 
-- ```src/Train.ipynb``` trains models (both single-subject and multi-subject). Check the argparser arguments to specify how you want to train the model (e.g., ```--num_sessions=1``` to train with 1-hour of data).
-    - Final models used in the paper were trained on an 8xA100 80GB node and will OOM on weaker compute. You can train the model on weaker compute with minimal performance impact by changing certain model arguments: We recommend lowering hidden_dim to 1024 (or even 512), removing the low-level submodule (``--no-blurry_recon``), and lowering the batch size.
-    - To train a single-subject model, set ```--no-multi_subject``` and ```--subj=#``` where # is the subject from NSD you wish to train
-    - To train a multi-subject model (i.e., pretraining), set ```--multi_subject``` and ```--subj=#``` where # is the one subject out of 8 NSD subjects to **not** include in the pretraining.
-    - To fine-tune from a multi-subject model, set ```--no-multi_subject``` and ```--multisubject_ckpt=path_to_your_pretrained_ckpt_folder```
-- ```src/recon_inference_mi.ipynb``` will run inference on the NSD Imagery dataset using a pretrained model, outputting tensors of reconstructions/predicted captions/etc.
-- ```src/final_evaluations_multi_mi.ipynb``` will visualize reconstructions the best and median output from ```src/recon_inference_mi``` and compute quantitative metrics.
-- See .slurm files for example scripts for running the .ipynb notebooks as batch jobs submitted to Slurm job scheduling.
+- ```src/Train.ipynb``` trains models using our ridge regression backbone
+- ```src/recon_inference_mi.ipynb``` will run inference on the NSD Imagery dataset using a trained model, outputting tensors of reconstructions/predicted captions/etc.
+- ```src/final_evaluations_multi_mi.ipynb``` will compute quantitative metrics
