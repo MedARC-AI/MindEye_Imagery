@@ -1150,16 +1150,5 @@ python plots_across_methods.py \
     --data_path ../dataset \
     --output_path ../figs/ \
     --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
-    --output_file methods_scatter_ridge_ablation_s3
-
-    python plots_across_methods.py \
-    --methods "subj08_40sess_hypatia_mirage_weight_decay_1_abalation, \
-    subj08_40sess_hypatia_mirage_weight_decay_1000_abalation, \
-    subj08_40sess_hypatia_mirage_weight_decay_10000_abalation, \
-    subj08_40sess_hypatia_mirage_weight_decay_100000_abalation, \
-    subj08_40sess_hypatia_mirage_weight_decay_1000000_abalation, \
-    subj08_40sess_hypatia_mirage_weight_decay_10000000_abalation" \
-    --data_path ../dataset \
-    --output_path ../figs/ \
-    --criteria "PixCorr,SSIM,AlexNet(2),AlexNet(5),InceptionV3,CLIP,EffNet-B,SwAV" \
-    --output_file methods_scatter_ridge_ablation_s8
+    --subjs "3,4,6,8" \
+    --output_file methods_scatter_ridge_ablation_s3468_nobc

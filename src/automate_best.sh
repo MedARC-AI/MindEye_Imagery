@@ -6,7 +6,7 @@ jupyter nbconvert plots_across_methods.ipynb --to python
 
 export CUDA_VISIBLE_DEVICES="1"
 subj=1
-for sess in 20 10 5 3 2 1 0.5; do
+for sess in 2 1 0.5; do #20 10 5 3 
     model_name="subj0${subj}_${sess}sess_hypatia_mirage3"
     if [ "$sess" != "20" ]; then
         python Train.py \
@@ -19,7 +19,7 @@ for sess in 20 10 5 3 2 1 0.5; do
     fi
     
 
-    for mode in "vision" "imagery" ; do #"shared1000"
+    for mode in "imagery" "vision"; do #"shared1000"
 
         python recon_inference_mi.py \
             --model_name $model_name \
